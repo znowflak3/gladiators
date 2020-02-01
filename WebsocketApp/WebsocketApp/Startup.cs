@@ -14,17 +14,49 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WebSocketOptions = Microsoft.AspNetCore.Builder.WebSocketOptions;
+using GamesVonKoch.Core;
 
 namespace WebsocketApp
 {
     public class Startup
     {
-        private readonly Kernel_kernel;
+        private readonly Kernel _kernel;
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            _kernel = new Kernel();
+            _kernel = new Kernel(0, (rt, self, state, msg) => {
+                var sessionManager_pid = rt.Spawn(null, sessionManager);
+                var log_pid = rt.Spawn(null, log);
+                return null;
+            });
         }
+        ActorMeth clientProxy = (rt, self, state, msg) =>
+        {
+            return null;
+        };
+        ActorMeth sessionManager = (rt, self, state, msg) =>
+        {
+            switch (state) 
+            {
+                default: 
+                    break;
+            }
+            return null;
+        };
+        ActorMeth sessionRelay = (rt, self, state, msg) =>
+        {
+            return null;
+        };
+
+        ActorMeth gameManager = (rt, self, state, msg) =>
+        {
+            return null;
+        };
+
+        ActorMeth log = (rt, self, state, msg) =>
+        {
+            return null;
+        };
 
         public IConfiguration Configuration { get; }
 
@@ -54,9 +86,11 @@ namespace WebsocketApp
             {
                 if (context.Request.Path == "/ws")
                 {
+                    
                     if (context.WebSockets.IsWebSocketRequest)
                     {
                         WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                        
                         await Echo(context, webSocket);
                     }
                     else 
@@ -87,7 +121,7 @@ namespace WebsocketApp
             var buffer = new byte[4096];
 
             WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            result.
+            
             while (!result.CloseStatus.HasValue)
             {
                 await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0 , result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
