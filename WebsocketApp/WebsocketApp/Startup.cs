@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,9 +19,11 @@ namespace WebsocketApp
 {
     public class Startup
     {
+        private readonly Kernel_kernel;
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            _kernel = new Kernel();
         }
 
         public IConfiguration Configuration { get; }
@@ -47,18 +50,21 @@ namespace WebsocketApp
 
             app.UseWebSockets();
 
-            app.Use(async (context, next) => 
+            app.Use(async (context, next) =>
             {
                 if (context.Request.Path == "/ws")
                 {
-                    WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                    var bla = Echo();
-                    var blabla = Echo();
-                    int a = 1 + 1;
-                    await bla;
-                    await Echo(context, webSocket);
+                    if (context.WebSockets.IsWebSocketRequest)
+                    {
+                        WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                        await Echo(context, webSocket);
+                    }
+                    else 
+                    {
+                        await next();
+                    }
                 }
-                else 
+                else
                 {
                     context.Response.StatusCode = 400;
 
@@ -76,7 +82,21 @@ namespace WebsocketApp
                 endpoints.MapControllers();
             });
         }
-        private async Task Echo()
-        { }
+        private async Task Echo(HttpContext context, WebSocket webSocket)
+        {
+            var buffer = new byte[4096];
+
+            WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            result.
+            while (!result.CloseStatus.HasValue)
+            {
+                await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0 , result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
+                         
+                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            }
+
+            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+
+        }
     }
 }
