@@ -24,64 +24,77 @@ namespace WebsocketApp
         private readonly Kernel _kernel;
         public Startup(IConfiguration configuration)
         {
+            Console.WriteLine();
             Configuration = configuration;
-            _kernel = new Kernel(0, (rt, self, state, msg) => {
-                var sessionManager_pid = rt.Spawn(null, sessionManager);
-                var log_pid = rt.Spawn(null, log);
+            _kernel = new Kernel(0, (rt, self, _, msg) =>
+            {
+                var login_pid = rt.Spawn(null, Login());
+                var sessionManager_pid = rt.SpawnLink(login_pid, SessionManager());
+                var log_pid = rt.SpawnLink(login_pid, Log());
+
+                
+
                 return null;
             });
         }
-        ActorMeth clientProxy = (rt, self, state, msg) =>
+        ActorMeth ClientProxy()
         {
-            return null;
-        };
-        ActorMeth sessionManager = (rt, self, state, msg) =>
-        {
-
-
-            switch (state) 
+            ActorMeth behaviour = (rt, self, _, msg) =>
             {
-                case Symbol.StartGame:
-                    var pid = rt.SpawnLink(new gameState(10), gameManager);
-                    r
-                    break;
-                default: 
-                    break;
-            }
-            return null;
-        };
-        ActorMeth sessionRelay = (rt, self, state, msg) =>
-        {
-            return null;
-        };
-        struct gameState
-        {
-            public Gladiator gladiatorA;
-            public Gladiator gladiatorB;
-            public int turnCount;
-
-            public gameState(int a)
-            {
-                gladiatorA = new Gladiator();
-                gladiatorB = new Gladiator();
-                turnCount = a;
-            }
+                return null;
+            };
+            return behaviour;
         }
-        static ActorMeth GameManager() {
-            gameState state = new gameState(4);
-            ActorMeth behavior = (rt, self, _, msg) =>
+        ActorMeth SessionManager()
+        {
+
+            ActorMeth behaviour = (rt, self, _, msg) =>
+            {
+                switch (msg.mtype)
+                {
+                    case Symbol.AddChild:
+                        
+                        break;
+                    case Symbol.StartGame:
+                        var pid = rt.SpawnLink(null, GameManager());
+
+                        break;
+                    default:
+                        break;
+                }
+                return null;
+            }
+            return behaviour;
+        }
+        static ActorMeth SessionRelay()
+        {
+            ActorMeth behaviour = (rt, self, _, msg) =>
+                {
+                    return null;
+                };
+            return behaviour;
+        }
+        static ActorMeth GameManager()
+        {
+            Gladiator gladiatorOne = new Gladiator();
+            Gladiator gladiatorTwo = new Gladiator();
+
+            int turnCount = 0;
+
+
+            ActorMeth behaviour = (rt, self, _, msg) =>
         {
             switch (msg.mtype)
             {
                 case Symbol.AddChild:
-                    //add serverReelay
-                    break;
+                //add serverReelay
+                break;
                 case Symbol.GameAttack:
-                    if ((state.turnCount & 1) == 0)
+                    if ((turnCount & 1) == 0)// gladiator a
                     {
 
                     }
-                    else
+                    else // gladiator b
                     {
 
                     }
@@ -90,18 +103,36 @@ namespace WebsocketApp
                     break;
             }
             return null;
-        }
-            return behavior;
         };
 
-        ActorMeth log = (rt, self, state, msg) =>
+            return behaviour;
+        }
+
+        ActorMeth Log()
+        {
+            ActorMeth behaviour = (rt, self, state, msg) =>
         {
             return null;
         };
-        ActorMeth database = (rt, self, state, msg) =>
+            return behaviour;
+        }
+
+        static ActorMeth Database()
         {
-            return null;
-        };
+            ActorMeth behaviour = (rt, self, _, msg) =>
+            {
+                return null;
+            };
+            return behaviour;
+        }
+        static ActorMeth Login()
+        {
+            ActorMeth behaviour = (rt, self, _, msg) =>
+            {
+                return null;
+            };
+            return behaviour;
+        }
 
         public IConfiguration Configuration { get; }
 
@@ -131,14 +162,14 @@ namespace WebsocketApp
             {
                 if (context.Request.Path == "/ws")
                 {
-                    
+
                     if (context.WebSockets.IsWebSocketRequest)
                     {
                         WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        
+
                         await Echo(context, webSocket);
                     }
-                    else 
+                    else
                     {
                         await next();
                     }
@@ -166,11 +197,11 @@ namespace WebsocketApp
             var buffer = new byte[4096];
 
             WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            
+
             while (!result.CloseStatus.HasValue)
             {
-                await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0 , result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
-                         
+                await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None);
+
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }
 
