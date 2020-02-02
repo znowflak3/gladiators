@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using WebSocketOptions = Microsoft.AspNetCore.Builder.WebSocketOptions;
 using GamesVonKoch.Core;
 
+
 namespace WebsocketApp
 {
     public class Startup
@@ -36,8 +37,14 @@ namespace WebsocketApp
         };
         ActorMeth sessionManager = (rt, self, state, msg) =>
         {
+
+
             switch (state) 
             {
+                case Symbol.StartGame:
+                    var pid = rt.SpawnLink(new gameState(10), gameManager);
+                    r
+                    break;
                 default: 
                     break;
             }
@@ -47,13 +54,51 @@ namespace WebsocketApp
         {
             return null;
         };
-
-        ActorMeth gameManager = (rt, self, state, msg) =>
+        struct gameState
         {
+            public Gladiator gladiatorA;
+            public Gladiator gladiatorB;
+            public int turnCount;
+
+            public gameState(int a)
+            {
+                gladiatorA = new Gladiator();
+                gladiatorB = new Gladiator();
+                turnCount = a;
+            }
+        }
+        static ActorMeth GameManager() {
+            gameState state = new gameState(4);
+            ActorMeth behavior = (rt, self, _, msg) =>
+        {
+            switch (msg.mtype)
+            {
+                case Symbol.AddChild:
+                    //add serverReelay
+                    break;
+                case Symbol.GameAttack:
+                    if ((state.turnCount & 1) == 0)
+                    {
+
+                    }
+                    else
+                    {
+
+                    }
+                    break;
+                default:
+                    break;
+            }
             return null;
+        }
+            return behavior;
         };
 
         ActorMeth log = (rt, self, state, msg) =>
+        {
+            return null;
+        };
+        ActorMeth database = (rt, self, state, msg) =>
         {
             return null;
         };

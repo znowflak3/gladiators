@@ -133,7 +133,12 @@ namespace GamesVonKoch.Core
 		NoReply,
 		Normal,
 		Shutdown,
-		Ok, Err
+		Ok, Err,
+		AddChild,
+		StartGame,
+		GameAttack
+
+
 	}
 
 	public struct PID
