@@ -70,20 +70,6 @@ namespace GamesVonKoch.Act
         }
     }
 
-    public class ClientProxy
-    {
-        private PID self;
-        private Runtime runtime;
-    }
-
-    public class Fight { }
-
-    public class GameManager
-    {
-        private PID self;
-        private Runtime runtime;
-    }
-
     public class Future
     {
         private PID self;

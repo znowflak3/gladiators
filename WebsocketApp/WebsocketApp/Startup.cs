@@ -181,6 +181,8 @@ namespace WebsocketApp
                     {
                         WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
                         // add socket to list of socket in kernel..
+                        _kernel.AddWebSocketConnection();
+
                         bool recievedMessage = false;
                         while (!recievedMessage)
                         {
@@ -192,14 +194,22 @@ namespace WebsocketApp
                                 {
 
                                     string converted = Encoding.UTF8.GetString(buffer, 0, buffer.Length).Replace("\0", string.Empty);
-                                    Login login = JsonSerializer.Deserialize<Login>(converted);
-                                    recievedMessage = true;
+                                    converted = converted.Replace("\"", " ");
+                                    try
+                                    {
+                                        Login login = JsonSerializer.Deserialize<Login>(converted);
+                                    }
+                                    catch (JsonException ex)
+                                    {
+                                        //await webSocket.SendAsync();
+                                    }
+                                        recievedMessage = true;
                                 }
                                
                             }
                         }
                         //Create client proxy
-                        await Echo(context, webSocket);
+                        //await Echo(context, webSocket);
                     }
                     else
                     {
