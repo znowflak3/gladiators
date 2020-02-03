@@ -52,9 +52,6 @@ namespace WebsocketApp
             {
                 switch (msg.mtype)
                 {
-                    case Symbol.AddChild:
-                        
-                        break;
                     case Symbol.StartGame:
                         var pid = rt.SpawnLink(null, GameManager());
 
@@ -129,6 +126,19 @@ namespace WebsocketApp
         {
             ActorMeth behaviour = (rt, self, _, msg) =>
             {
+                switch (msg.mtype)
+                {
+                    case Symbol.Authorize:
+                        //check if user exist
+                        //check if password matches.
+                        //add socket to socketDictionary.
+                        break;
+                    case Symbol.CreateUser:
+                        
+                        break;
+                    default:
+                        break;
+                }
                 return null;
             };
             return behaviour;
@@ -160,13 +170,15 @@ namespace WebsocketApp
 
             app.Use(async (context, next) =>
             {
+                
                 if (context.Request.Path == "/ws")
                 {
 
                     if (context.WebSockets.IsWebSocketRequest)
                     {
                         WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-
+                        // add socket to list of socket in kernel..
+                        //Create clclient proxy
                         await Echo(context, webSocket);
                     }
                     else

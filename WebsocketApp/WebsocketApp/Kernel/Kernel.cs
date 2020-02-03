@@ -134,6 +134,8 @@ namespace GamesVonKoch.Core
 		Normal,
 		Shutdown,
 		Ok, Err,
+		Authorize, 
+		CreateUser,
 		AddChild,
 		StartGame,
 		GameAttack
@@ -237,6 +239,7 @@ namespace GamesVonKoch.Core
 
 		private Queue<PID> kqueue = new Queue<PID>();
 		private Dictionary<PID, Actor> actors = new Dictionary<PID, Actor>();
+		private Dictionary<PID, Websocket>
 
 		long pidcount = 0;
 		bool pidoverflow = false;
