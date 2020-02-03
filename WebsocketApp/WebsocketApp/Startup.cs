@@ -15,7 +15,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WebSocketOptions = Microsoft.AspNetCore.Builder.WebSocketOptions;
 using GamesVonKoch.Core;
-
+using GamesVonKoch.DbModels;
+using System.Text;
+using System.Text.Json;
+using WebsocketApp.JsonModels;
 
 namespace WebsocketApp
 {
@@ -32,7 +35,7 @@ namespace WebsocketApp
                 var sessionManager_pid = rt.SpawnLink(login_pid, SessionManager());
                 var log_pid = rt.SpawnLink(login_pid, Log());
 
-                
+
 
                 return null;
             });
@@ -60,7 +63,7 @@ namespace WebsocketApp
                         break;
                 }
                 return null;
-            }
+            };
             return behaviour;
         }
         static ActorMeth SessionRelay()
@@ -84,8 +87,8 @@ namespace WebsocketApp
             switch (msg.mtype)
             {
                 case Symbol.AddChild:
-                //add serverReelay
-                break;
+                    //add serverReelay
+                    break;
                 case Symbol.GameAttack:
                     if ((turnCount & 1) == 0)// gladiator a
                     {
@@ -134,7 +137,7 @@ namespace WebsocketApp
                         //add socket to socketDictionary.
                         break;
                     case Symbol.CreateUser:
-                        
+
                         break;
                     default:
                         break;
@@ -170,7 +173,7 @@ namespace WebsocketApp
 
             app.Use(async (context, next) =>
             {
-                
+
                 if (context.Request.Path == "/ws")
                 {
 
@@ -178,7 +181,24 @@ namespace WebsocketApp
                     {
                         WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
                         // add socket to list of socket in kernel..
-                        //Create clclient proxy
+                        bool recievedMessage = false;
+                        while (!recievedMessage)
+                        {
+                            byte[] buffer = new byte[4096];
+                            WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                            if (!result.CloseStatus.HasValue)
+                            {
+                                if (result.MessageType.HasFlag(WebSocketMessageType.Text))
+                                {
+
+                                    string converted = Encoding.UTF8.GetString(buffer, 0, buffer.Length).Replace("\0", string.Empty);
+                                    Login login = JsonSerializer.Deserialize<Login>(converted);
+                                    recievedMessage = true;
+                                }
+                               
+                            }
+                        }
+                        //Create client proxy
                         await Echo(context, webSocket);
                     }
                     else
