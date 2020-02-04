@@ -130,6 +130,8 @@ namespace GamesVonKoch.Act
 namespace GamesVonKoch.Core
 {
     using System.Net.WebSockets;
+    using System.Threading.Tasks;
+
     public enum Symbol
     {
         Text,
@@ -313,9 +315,9 @@ namespace GamesVonKoch.Core
             return pid;
         }
         //Add Websocketconnection to Dictionary
-        public void AddWebSocketConnection()
+        public void AddWebSocketConnection(PID key, WebSocket webSocket)
         {
-
+            webSockets.Add(key, webSocket);
         }
         // Send a message to another actor's mailbox
         public void Send(PID to, Mail msg)
@@ -326,6 +328,8 @@ namespace GamesVonKoch.Core
             {
                 actors[to].AddMail(msg);
             }
+            //Step();
+            
         }
 
         public dynamic Call(PID self, Mail msg)
@@ -368,6 +372,14 @@ namespace GamesVonKoch.Core
             {
                 Console.WriteLine("Kernel exit without error: This is a server bug.");
                 return false;
+            }
+        }
+        public async void Loop()
+        {
+            while (true)
+            {
+                await Task.Run(() => Step());
+                
             }
         }
 

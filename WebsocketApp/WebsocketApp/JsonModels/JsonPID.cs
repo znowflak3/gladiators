@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 namespace WebsocketApp.JsonModels
 {
-    public class JayMail
-    {
-
-        public Symbol MailType { get; set; }
-        public dynamic Content { get; set; }
+    public class JsonPID
+    { 
+        public string pId { get; set; }
+        public JsonPID(PID id) 
+        {
+            pId = id.ToString();
+        }
     }
 }

@@ -19,26 +19,34 @@ using GamesVonKoch.DbModels;
 using System.Text;
 using System.Text.Json;
 using WebsocketApp.JsonModels;
+using WebsocketApp.Services;
+using System.Text.Json.Serialization;
 
 namespace WebsocketApp
 {
     public class Startup
     {
         private readonly Kernel _kernel;
+        private readonly List<WebSocket> _websockets;
+
+        private PID _sessionManager_pid;
         public Startup(IConfiguration configuration)
         {
-            Console.WriteLine();
+            Console.WriteLine("dfgdfhd");
             Configuration = configuration;
+            _websockets = new List<WebSocket>();
             _kernel = new Kernel(0, (rt, self, _, msg) =>
             {
                 var login_pid = rt.Spawn(null, Login());
                 var sessionManager_pid = rt.SpawnLink(login_pid, SessionManager());
                 var log_pid = rt.SpawnLink(login_pid, Log());
 
+                _sessionManager_pid = sessionManager_pid;
 
 
                 return null;
             });
+            _kernel.Loop();
         }
         ActorMeth ClientProxy()
         {
@@ -180,36 +188,64 @@ namespace WebsocketApp
                     if (context.WebSockets.IsWebSocketRequest)
                     {
                         WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        // add socket to list of socket in kernel..
-                        _kernel.AddWebSocketConnection();
 
-                        bool recievedMessage = false;
-                        while (!recievedMessage)
+                        while (webSocket.State == WebSocketState.Open)
                         {
-                            byte[] buffer = new byte[4096];
-                            WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                            if (!result.CloseStatus.HasValue)
-                            {
-                                if (result.MessageType.HasFlag(WebSocketMessageType.Text))
-                                {
+                            bool recievedMessage = false;
+                            MType mType = new MType();
+                            dynamic content = null;
 
-                                    string converted = Encoding.UTF8.GetString(buffer, 0, buffer.Length).Replace("\0", string.Empty);
-                                    converted = converted.Replace("\"", " ");
-                                    try
+                            while (!recievedMessage)
+                            {
+                                byte[] buffer = new byte[4096];
+                                WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                                if (!result.CloseStatus.HasValue)
+                                {
+                                    if (result.MessageType.HasFlag(WebSocketMessageType.Text))
                                     {
-                                        Login login = JsonSerializer.Deserialize<Login>(converted);
-                                    }
-                                    catch (JsonException ex)
-                                    {
-                                        //await webSocket.SendAsync();
-                                    }
+
+                                        string converted = Encoding.UTF8.GetString(buffer, 0, buffer.Length).Replace("\0", string.Empty);
+                                        var messages = converted.Split('}', 2, StringSplitOptions.RemoveEmptyEntries);
+                                        messages[0] += "}";
+
+                                        try
+                                        {
+                                            mType = JsonSerializer.Deserialize<MType>(messages[0]);
+                                        }
+                                        catch (JsonException ex)
+                                        {
+                                            mType = new MType("error");
+                                            //await webSocket.SendAsync();
+                                        }
+                                        WebSocketMailService webSocketMailService = new WebSocketMailService(mType.MailType, messages[1]);
+                                        content = webSocketMailService.HandleMessage();
+
                                         recievedMessage = true;
+                                    }
+
                                 }
-                               
                             }
+                            switch (mType.MailType)
+                            {
+                                case "authorize":
+                                    if (content.Username == "user" && content.Password == "pass")
+                                    {
+                                        var client_pid = _kernel.Spawn(null, ClientProxy());
+                                        _kernel.Send(_sessionManager_pid, new Mail(Symbol.AddChild, client_pid));
+                                        
+                                        _kernel.AddWebSocketConnection(client_pid, webSocket);
+                                        _websockets.Add(webSocket);
+                                        string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid));
+                                        byte[] buffer = Encoding.UTF8.GetBytes(json);
+                                        await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                            //Create client proxy
+                            //await Echo(context, webSocket);
                         }
-                        //Create client proxy
-                        //await Echo(context, webSocket);
                     }
                     else
                     {
@@ -221,6 +257,7 @@ namespace WebsocketApp
                     context.Response.StatusCode = 400;
 
                 }
+
             });
 
             app.UseHttpsRedirection();
