@@ -30,6 +30,7 @@ namespace WebsocketApp
         private readonly List<WebSocket> _websockets;
 
         private PID _sessionManager_pid;
+        private PID _echo_pid;
         public Startup(IConfiguration configuration)
         {
             Console.WriteLine("dfgdfhd");
@@ -40,9 +41,10 @@ namespace WebsocketApp
                 var login_pid = rt.Spawn(null, Login());
                 var sessionManager_pid = rt.SpawnLink(login_pid, SessionManager());
                 var log_pid = rt.SpawnLink(login_pid, Log());
+                var echo_pid = rt.Spawn(null, Echo());
 
                 _sessionManager_pid = sessionManager_pid;
-
+                _echo_pid = echo_pid;
 
                 return null;
             });
@@ -154,6 +156,22 @@ namespace WebsocketApp
             };
             return behaviour;
         }
+        static ActorMeth Echo()
+        {
+            ActorMeth behaviour = (rt, self, _, msg) =>
+            {
+                if (msg.mtype == Symbol.Echo)
+                {
+                    byte[] buffer;
+                    string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(msg.content));
+                    buffer = Encoding.UTF8.GetBytes(json);
+                    WebSocket socket = rt.GetWebSocket(msg.content);
+                    socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, false, CancellationToken.None);
+                }
+                return null;
+            };
+            return behaviour;
+        }
 
         public IConfiguration Configuration { get; }
 
@@ -194,6 +212,7 @@ namespace WebsocketApp
                             bool recievedMessage = false;
                             MType mType = new MType();
                             dynamic content = null;
+                            PID client_pid = new PID();
 
                             while (!recievedMessage)
                             {
@@ -227,10 +246,11 @@ namespace WebsocketApp
                             }
                             switch (mType.MailType)
                             {
+                                
                                 case "authorize":
                                     if (content.Username == "user" && content.Password == "pass")
                                     {
-                                        var client_pid = _kernel.Spawn(null, ClientProxy());
+                                        client_pid = _kernel.Spawn(null, ClientProxy());
                                         _kernel.Send(_sessionManager_pid, new Mail(Symbol.AddChild, client_pid));
                                         
                                         _kernel.AddWebSocketConnection(client_pid, webSocket);
@@ -239,6 +259,9 @@ namespace WebsocketApp
                                         byte[] buffer = Encoding.UTF8.GetBytes(json);
                                         await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
                                     }
+                                    break;
+                                case "echo":
+                                    _kernel.Send(_echo_pid, new Mail(Symbol.Echo, client_pid));
                                     break;
                                 default:
                                     break;

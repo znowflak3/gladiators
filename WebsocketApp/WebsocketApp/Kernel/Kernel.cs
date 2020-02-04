@@ -149,7 +149,8 @@ namespace GamesVonKoch.Core
         CreateUser,
         AddChild,
         StartGame,
-        GameAttack
+        GameAttack,
+        Echo
 
 
     }
@@ -182,6 +183,10 @@ namespace GamesVonKoch.Core
         {
             this.self = self;
             this.kernel = kernel;
+        }
+        public WebSocket GetWebSocket(PID pid)
+        {
+            return kernel.GetWebSocket(pid);
         }
 
         public void Send(PID to, Mail msg)
@@ -263,6 +268,12 @@ namespace GamesVonKoch.Core
         private Queue<PID> kqueue = new Queue<PID>();
         private Dictionary<PID, Actor> actors = new Dictionary<PID, Actor>();
         private Dictionary<PID, WebSocket> webSockets = new Dictionary<PID, WebSocket>();
+        public WebSocket GetWebSocket(PID pid)
+        {
+            if (webSockets.ContainsKey(pid))
+                return webSockets[pid];
+            return null;
+        }
 
         long pidcount = 0;
         bool pidoverflow = false;
@@ -329,7 +340,7 @@ namespace GamesVonKoch.Core
                 actors[to].AddMail(msg);
             }
             //Step();
-            
+
         }
 
         public dynamic Call(PID self, Mail msg)
@@ -379,7 +390,7 @@ namespace GamesVonKoch.Core
             while (true)
             {
                 await Task.Run(() => Step());
-                
+
             }
         }
 
