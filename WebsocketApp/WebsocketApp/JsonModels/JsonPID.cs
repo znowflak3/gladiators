@@ -13,5 +13,7 @@ namespace WebsocketApp.JsonModels
         {
             pId = id.ToString();
         }
+        public JsonPID()
+        { }
     }
 }

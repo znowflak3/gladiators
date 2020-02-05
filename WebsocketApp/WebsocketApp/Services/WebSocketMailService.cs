@@ -22,6 +22,9 @@ namespace WebsocketApp.Services
             dynamic result = null;
             switch (_type)
             {
+                case "createuser":
+
+                    break;
                 case "authorize":
                     try
                     {
@@ -33,10 +36,18 @@ namespace WebsocketApp.Services
                         result = ex.Message;
                     }
                     break;
-                case "createuser":
-                    
+                case "echo":
+                    try
+                    {
+                        JsonPID jsonPID = JsonSerializer.Deserialize<JsonPID>(_content);
+                        result = jsonPID;
+                        //  result = long.Parse(result.pId);
+                    }
+                    catch (JsonException ex)
+                    {
+                        result = ex.Message;
+                    }
                     break;
-
                 default:
                     break;
             }

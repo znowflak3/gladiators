@@ -163,10 +163,10 @@ namespace WebsocketApp
                 if (msg.mtype == Symbol.Echo)
                 {
                     byte[] buffer;
-                    string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(msg.content));
+                    string json = JsonSerializer.Serialize<JsonPID>(msg.content);
                     buffer = Encoding.UTF8.GetBytes(json);
                     WebSocket socket = rt.GetWebSocket(msg.content);
-                    socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, false, CancellationToken.None);
+                    socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
                 }
                 return null;
             };
@@ -212,6 +212,7 @@ namespace WebsocketApp
                             bool recievedMessage = false;
                             MType mType = new MType();
                             dynamic content = null;
+
                             PID client_pid = new PID();
 
                             while (!recievedMessage)
@@ -246,13 +247,14 @@ namespace WebsocketApp
                             }
                             switch (mType.MailType)
                             {
-                                
+
                                 case "authorize":
                                     if (content.Username == "user" && content.Password == "pass")
                                     {
                                         client_pid = _kernel.Spawn(null, ClientProxy());
+
                                         _kernel.Send(_sessionManager_pid, new Mail(Symbol.AddChild, client_pid));
-                                        
+
                                         _kernel.AddWebSocketConnection(client_pid, webSocket);
                                         _websockets.Add(webSocket);
                                         string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid));
@@ -261,7 +263,8 @@ namespace WebsocketApp
                                     }
                                     break;
                                 case "echo":
-                                    _kernel.Send(_echo_pid, new Mail(Symbol.Echo, client_pid));
+                                    //should be client_pid but need to save it for each message sent!
+                                    _kernel.Send(_echo_pid, new Mail(Symbol.Echo, new JsonPID(new PID(5))));
                                     break;
                                 default:
                                     break;
