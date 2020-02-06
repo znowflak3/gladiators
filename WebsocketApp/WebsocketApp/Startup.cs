@@ -65,7 +65,7 @@ namespace WebsocketApp
         ActorMeth SessionManager()
         {
             Queue<PID> playQueue = new Queue<PID>();
-            List<PID> gameManagers = new List<PID>();
+            Dictionary<PID, PID> clientToGames = new Dictionary<PID, PID>();
             
             ActorMeth behaviour = (rt, self, _, msg) =>
             {
@@ -79,15 +79,18 @@ namespace WebsocketApp
                         }
                         if (playQueue.Count > 1)
                         {
-                            
-
                             var playerOne = playQueue.Dequeue();
                             var playerTwo = playQueue.Dequeue();
                             PID[] players = new PID[] { playerOne, playerTwo };
                             var gameManager_pid = rt.SpawnLink(null, GameManager());
-                            gameManagers.Add(gameManager_pid);
+                            clientToGames.Add(playerOne, gameManager_pid);
+                            clientToGames.Add(playerTwo, gameManager_pid);
                             rt.Send(gameManager_pid, new Mail(Symbol.Init, players));
                         }
+                        break;
+                    case Symbol.GameAction:
+                        var to = clientToGames[new PID(long.Parse(msg.content.pId))];
+                        rt.Send(to, msg);
                         break;
                     default:
                         break;
@@ -139,6 +142,7 @@ namespace WebsocketApp
             PID playerOne;
             PID playerTwo;
 
+            bool isFinished = false;
 
             ActorMeth behaviour = (rt, self, _, msg) =>
         {
@@ -151,7 +155,7 @@ namespace WebsocketApp
                 case Symbol.AddChild:
                     //add serverReelay
                     break;
-                case Symbol.GameAttack:
+                case Symbol.GameAction:
                     if ((turnCount & 1) == 0)// gladiator a
                     {
 
@@ -164,6 +168,10 @@ namespace WebsocketApp
                     break;
                 default:
                     break;
+            }
+            if (!isFinished)
+            { 
+                
             }
             return null;
         };
@@ -322,6 +330,9 @@ namespace WebsocketApp
                                     break;
                                 case "queuegame":
                                     _kernel.Send(_sessionManager_pid, new Mail(Symbol.QueueGame, content));
+                                    break;
+                                case "gameaction":
+                                    _kernel.Send(_sessionManager_pid, new Mail(Symbol.GameAction, content));
                                     break;
                                 default:
                                     break;

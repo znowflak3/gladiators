@@ -47,6 +47,17 @@ namespace WebsocketApp.Services
                         result = ex.Message;
                     }
                     break;
+                case "gameaction":
+                    try
+                    {
+                        GameAction gameAction = JsonSerializer.Deserialize<GameAction>(_content);
+                        result = gameAction;
+                    }
+                    catch (JsonException ex)
+                    {
+                        result = ex.Message;
+                    }
+                    break;
                 case "echo":
                     try
                     {

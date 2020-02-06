@@ -7,5 +7,10 @@ namespace WebsocketApp.Services
 {
     public class GameManagerServices
     {
+        public GameManagerServices()
+        {
+            
+        }
+
     }
 }
