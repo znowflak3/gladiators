@@ -45,10 +45,13 @@ namespace WebsocketApp
 
                 _sessionManager_pid = sessionManager_pid;
                 _echo_pid = echo_pid;
-
+          
                 return null;
             });
+            
             _kernel.Loop();
+            
+            
         }
         ActorMeth ClientProxy()
         {
@@ -60,20 +63,37 @@ namespace WebsocketApp
         }
         ActorMeth SessionManager()
         {
-
+            Queue<PID> playQueue = new Queue<PID>();
+            List<PID> gameManagers = new List<PID>();
+            
             ActorMeth behaviour = (rt, self, _, msg) =>
             {
                 switch (msg.mtype)
                 {
-                    case Symbol.StartGame:
-                        var pid = rt.SpawnLink(null, GameManager());
+                    case Symbol.QueueGame:
+                        PID key = new PID(long.Parse(msg.content.pId));
+                        if (!playQueue.Contains(key))
+                        {
+                            playQueue.Enqueue(key);
+                        }
+                        if (playQueue.Count > 1)
+                        {
+                            
 
+                            var playerOne = playQueue.Dequeue();
+                            var playerTwo = playQueue.Dequeue();
+                            PID[] players = new PID[] { playerOne, playerTwo };
+                            var gameManager_pid = rt.SpawnLink(null, GameManager());
+                            gameManagers.Add(gameManager_pid);
+                            rt.Send(gameManager_pid, new Mail(Symbol.Init, players));
+                        }
                         break;
                     default:
                         break;
                 }
                 return null;
             };
+            
             return behaviour;
         }
         static ActorMeth SessionRelay()
@@ -96,6 +116,9 @@ namespace WebsocketApp
         {
             switch (msg.mtype)
             {
+                case Symbol.Init:
+                    
+                    break;
                 case Symbol.AddChild:
                     //add serverReelay
                     break;
@@ -266,6 +289,9 @@ namespace WebsocketApp
                                 case "echo":
                                     //should be client_pid but need to save it for each message sent!
                                     _kernel.Send(_echo_pid, new Mail(Symbol.Echo, content));
+                                    break;
+                                case "queuegame":
+                                    _kernel.Send(_sessionManager_pid, new Mail(Symbol.QueueGame, content));
                                     break;
                                 default:
                                     break;

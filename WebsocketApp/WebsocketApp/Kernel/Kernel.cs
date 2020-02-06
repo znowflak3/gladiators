@@ -148,7 +148,7 @@ namespace GamesVonKoch.Core
         Authorize,
         CreateUser,
         AddChild,
-        StartGame,
+        QueueGame,
         GameAttack,
         Echo
 

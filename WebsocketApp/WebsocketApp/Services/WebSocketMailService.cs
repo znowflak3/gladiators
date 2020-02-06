@@ -36,6 +36,17 @@ namespace WebsocketApp.Services
                         result = ex.Message;
                     }
                     break;
+                case "queuegame":
+                    try 
+                    {
+                        JsonPID jsonPID = JsonSerializer.Deserialize<JsonPID>(_content);
+                        result = jsonPID;
+                    }
+                    catch (JsonException ex)
+                    {
+                        result = ex.Message;
+                    }
+                    break;
                 case "echo":
                     try
                     {
