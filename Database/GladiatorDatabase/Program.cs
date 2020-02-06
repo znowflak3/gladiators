@@ -52,6 +52,7 @@ namespace GladiatorDatabase
 
                  
                 /*
+                 * en komentar
                 Console.WriteLine("User Name:");
                 var name = Console.ReadLine();
                 
