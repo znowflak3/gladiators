@@ -165,7 +165,8 @@ namespace WebsocketApp
                     byte[] buffer;
                     string json = JsonSerializer.Serialize<JsonPID>(msg.content);
                     buffer = Encoding.UTF8.GetBytes(json);
-                    WebSocket socket = rt.GetWebSocket(msg.content);
+                    PID webSocketKey = new PID(long.Parse(msg.content.pId));
+                    WebSocket socket = rt.GetWebSocket(webSocketKey);
                     socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
                 }
                 return null;
@@ -264,7 +265,7 @@ namespace WebsocketApp
                                     break;
                                 case "echo":
                                     //should be client_pid but need to save it for each message sent!
-                                    _kernel.Send(_echo_pid, new Mail(Symbol.Echo, new JsonPID(new PID(5))));
+                                    _kernel.Send(_echo_pid, new Mail(Symbol.Echo, content));
                                     break;
                                 default:
                                     break;
