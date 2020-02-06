@@ -1,0 +1,36 @@
+{
+	"MailType"://Symbol
+}
+{
+	"Username":"user",
+	"Password":"pass"
+}
+//
+{"MailType":"echo"}
+{
+	"pId":"value"
+//	"UsersPID"://send back the pid user is supposed to talk to
+}
+//queuegame puts client user in queue to w8 for another player
+{
+	"MailType":"queuegame"
+}
+{
+	"pId":"value"	
+}
+//gameAttack
+{
+	"MailType":"gameattack"
+}
+{
+	"pId":"value",
+	"action":"value/attack", //only support attack action at moment
+	"target":"value", // can be null at the moment
+	"turnCount":"value"
+}
+=> sends back =>
+{
+	"gladiatorOne":{"Health":"value"}
+	"gladiatorTwo":{"Health":"value"}
+	"turnCount":"value"
+}

@@ -21,6 +21,7 @@ using System.Text.Json;
 using WebsocketApp.JsonModels;
 using WebsocketApp.Services;
 using System.Text.Json.Serialization;
+using static GamesVonKoch.DbModels.Gladiator;
 
 namespace WebsocketApp
 {
@@ -106,10 +107,37 @@ namespace WebsocketApp
         }
         static ActorMeth GameManager()
         {
-            Gladiator gladiatorOne = new Gladiator();
-            Gladiator gladiatorTwo = new Gladiator();
+            Gladiator gladiatorOne = new Gladiator()
+            {
+                GladiatorId = 1
+            };
+            Stats statsOne = new Stats()
+            {
+                Health = 100,
+                Defense = 10,
+                Stamina = 10,
+                Morale = 10,
+                Speed = 10,
+                Strength = 10
+            };
+            Gladiator gladiatorTwo = new Gladiator()
+            {
+                GladiatorId = 1
+            };
+            Stats statsTwo = new Stats()
+            {
+                Health = 100,
+                Defense = 10,
+                Stamina = 10,
+                Morale = 10,
+                Speed = 10,
+                Strength = 10
+            };
 
             int turnCount = 0;
+
+            PID playerOne;
+            PID playerTwo;
 
 
             ActorMeth behaviour = (rt, self, _, msg) =>
@@ -117,7 +145,8 @@ namespace WebsocketApp
             switch (msg.mtype)
             {
                 case Symbol.Init:
-                    
+                    playerOne = msg.content[0];
+                    playerTwo = msg.content[1];
                     break;
                 case Symbol.AddChild:
                     //add serverReelay
@@ -131,6 +160,7 @@ namespace WebsocketApp
                     {
 
                     }
+                    turnCount++;
                     break;
                 default:
                     break;
