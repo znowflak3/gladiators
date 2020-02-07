@@ -16,7 +16,7 @@ namespace GladiatorDatabase
                 Console.WriteLine("Temp Switch Meny");
                 Console.WriteLine("1: User. 2: Lanistas. 3: Gladiator. 4: Items. 5: BattleResult. 6: GladiatorKills. ");
                 var c = Console.ReadKey();
-
+                
                 switch (c.Key)
                 {
                     case ConsoleKey.D1:
@@ -25,7 +25,7 @@ namespace GladiatorDatabase
                         var crud = Console.ReadKey();
                         
                         Usermanager usermanager = new Usermanager(db);
-
+                        
                         //usermanager.Create();
                         //usermanager.Read();
                         //usermanager.Update();
