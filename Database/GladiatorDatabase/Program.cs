@@ -25,8 +25,10 @@ namespace GladiatorDatabase
                         var crud = Console.ReadKey();
                         
                         Usermanager usermanager = new Usermanager(db);
-                        usermanager.Read();
-                        usermanager.Update();
+                        //usermanager.Create();
+                        //usermanager.Read();
+                        //usermanager.Update();
+                        //usermanager.Destroy();
                         break;
                     case ConsoleKey.D2:
                         Console.WriteLine("Lanistas: ");
@@ -49,31 +51,7 @@ namespace GladiatorDatabase
                         Console.WriteLine("1: Create. 2: Read. 3: Update. 4: Destroy.");
                         break;
                 }
-
-                 
-                /*
-                 * en ny komentar
-                Console.WriteLine("User Name:");
-                var name = Console.ReadLine();
                 
-                var User = new User { UserName = name };
-                db.Users.Add(User);
-                db.SaveChanges();
-
-                Console.WriteLine("Lanista Name:");
-                name = Console.ReadLine();
-                
-                var Lanista = new Lanista { LanistaName = name };
-                db.Lanistas.Add(Lanista);
-                db.SaveChanges();
-
-                var test = from s in db.Lanistas orderby s.LanistaName select s;
-                 
-                foreach (var item in test)
-                {
-                    Console.WriteLine(item.LanistaName);
-                    Console.WriteLine(item.LanistaId);
-                };*/
                 Console.WriteLine("**********");
                 Console.ReadKey();
 
@@ -92,93 +70,69 @@ public class Usermanager
 
     EditorContext DB { get; set; }
     
-    public void Create()
+    public void Create(string userName, string password, string email)
     {
         Console.WriteLine("\n*Create User*");
-        Console.WriteLine("User Name: ");
-        var name = Console.ReadLine();
-        var User = new User { UserName = name };
-        DB.Users.Add(User);
-        DB.SaveChanges();
-    }
-    public void Read() 
-    {   
-        Console.WriteLine("\n*Read User*");
-        Console.WriteLine("User Name: ");
-        var SortUsers = from s in DB.Users orderby s.UserName select s;
-        
-        foreach (var item in SortUsers)
+        var name = userName;
+        var User = new User { UserName = name, Password = password, Email = email };
+        var dupUser = DB.Users.Where(s => s.UserName == name).ToList();
+        var colit = dupUser.Count;
+        if (colit != 0)
         {
-            Console.WriteLine("User: {0} UserId: {1}", item.UserName, item.UserId);
-        };
-    }
-    public void Update()
-    {
-        Console.WriteLine("\n*Update User*");
-        Console.WriteLine("User Name: ");
-        var name = Console.ReadLine();
-        var dupUserName = DB.Users.Where(s => s.UserName == name).ToList();
-        User user;
-        
-        if ((dupUserName.Count != 1) && (dupUserName.Count > 0)) 
-        { 
-            Console.WriteLine("\nNot Unik User Name.");
-            Console.WriteLine("\nEnter Id: ");
-            var check = int.TryParse(Console.ReadLine(), out int userid);
-            if (check) 
-            {
-
-                user = DB.Users.Find(userid);
-            }
-            else
-            {
-                Console.WriteLine("\nInvalid Id Input!\n");
-            }           
-        }
-        else if (dupUserName.Count == 1)
-        {
-
-            user = dupUserName.Single();
-
+            Console.WriteLine("\nNot a valid User Name!\n");
         }
         else
         {
-            Console.WriteLine("\nInvalid Name Input!\n");
-            
+            DB.Users.Add(User);
+            DB.SaveChanges();
         }
-
-
-        Console.WriteLine("\nUser Name: ");
-        var input = Console.ReadLine();
-        user.UserName = input;
-        Console.WriteLine("\nUser Password: ");
-        DB.Users.Find(update).Password = Console.ReadLine();
-        Console.WriteLine("\nUser e-mail: ");
-        DB.Users.Find(update).Email = Console.ReadLine();
+    }
+    public void Read()
+    {   
+        Console.WriteLine("\n*Read User*");
+        var SortUsers = DB.Users.OrderBy(s => s.UserName);
+        var check = SortUsers.Count<User>();
+        if (check > 0)
+        {
+            foreach (var item in SortUsers)
+            {
+                Console.WriteLine("User: {0} UserId: {1}", item.UserName, item.UserId);
+            }
+        }
+        else 
+        { 
+            Console.WriteLine("No Users!"); 
+        }
+    }
+    public void Update(User user, string userName, string password, string email)
+    {
+        Console.WriteLine("\n*Update User*");
+        user.UserName = userName;
+        user.Password = password;
+        user.Email = email;
         
         Console.WriteLine("Confirm [y]: ");
         var key = Console.ReadKey();
         if(key.Key == ConsoleKey.Y) 
         {
-            DB.Users.Update(DB.Users.Find(update));
+            DB.Users.Update(user);
             DB.SaveChanges();
         }
 
 
     }
-    public void Destroy()
+    public void Destroy(User user)
     {
         Console.WriteLine("\n*Destroy User*");
-        Console.WriteLine("\nUser Name: ");
-        var username = Console.ReadLine();
-        Console.WriteLine("\nUser ID: ");
-        int.TryParse(Console.ReadLine(), out int userid);
+        DB.Users.Remove(user);
 
-        
-        
-        
+        Console.WriteLine("Confirm Delete [y]: ");
+        var key = Console.ReadKey();
+        if (key.Key == ConsoleKey.Y)
+        {    
+            DB.SaveChanges();
+        }
 
-        
     }
 
 }
@@ -208,15 +162,14 @@ public class Lanista
 public class Gladiator
 {
     public int GladiatorId { get; set; }
-    public struct Stats
-    {
-       public int Health;
-       public int Stamina;
-       public int Speed;
-       public int Morale;
-       public int Strength;
-       public int Defense;
-    }
+
+    public int Health;
+    public int Stamina;
+    public int Speed;
+    public int Morale;
+    public int Strength;
+    public int Defense;
+    
     public int Wins { get; set; }
     public int Loss { get; set; }
     public int Kills { get; set; }
@@ -236,15 +189,13 @@ public class Item
     public int ItemId { get; set; }
     public int Type { get; set; }
 
-    public struct Stats
-    {
-       public int Health;
-       public int Stamina;
-       public int Speed;
-       public int Morale;
-       public int Strength;
-       public int Defense;
-    }
+    public int Health;
+    public int Stamina;
+    public int Speed;
+    public int Morale;
+    public int Strength;
+    public int Defense;
+    
     public virtual Lanista Lanista { get; set; }
     public virtual Gladiator Gladiator { get; set; }
      
