@@ -90,23 +90,54 @@ namespace WebsocketApp
                         playerOne = msg.content[0];
                         playerTwo = msg.content[1];
 
-                        var pOneMsg = new GameReturn()
+                        var pOneMsg = new GameManagerService().GetReturnMessage(gladiatorOne);
+                        pOneMsg.TurnCount = turnCount;
+                        pOneMsg.YourGladiator = "gladiatorOne";
+                        pOneMsg.YourTurn = "gladiatorOne";
+
+                        var pTwoMsg = new GameManagerService().GetReturnMessage(gladiatorTwo);
+                        pTwoMsg.TurnCount = turnCount;
+                        pTwoMsg.YourGladiator = "gladiatorTwo";
+                        pTwoMsg.YourTurn = "gladiatorOne";
+                  
+                        /*new GameReturn()
                         {
                             GOneHealth = gladiatorOne.Health.ToString(),
                             GTwoHealth = gladiatorTwo.Health.ToString(),
                             YourGladiator = "gladiatorOne",
                             YourTurn = "gladiatorOne",
-                            TurnCount = turnCount.ToString()
+                            TurnCount = turnCount.ToString(),
+                            Skills = new List<string>(),
+                            Buffs = new List<string>()
                         };
-
+                        foreach (Skill skill in gladiatorOne.Skills)
+                        {
+                            pOneMsg.Skills.Add(skill.Name.ToLower());
+                        }
+                        foreach (Buff buff in gladiatorOne.Buffs)
+                        {
+                            pOneMsg.Buffs.Add(buff.Name.ToLower());
+                        }*/
+                        /*
                         var pTwoMsg = new GameReturn()
                         {
                             GOneHealth = gladiatorOne.Health.ToString(),
                             GTwoHealth = gladiatorTwo.Health.ToString(),
                             YourGladiator = "gladiatorTwo",
-                            YourTurn = "gladiatorTwo",
-                            TurnCount = turnCount.ToString()
+                            YourTurn = "gladiatorOne",
+                            TurnCount = turnCount.ToString(),
+                            Skills = new List<string>(),
+                            Buffs = new List<string>()
                         };
+                        foreach(Skill skill in gladiatorTwo.Skills)
+                        {
+                            pTwoMsg.Skills.Add(skill.Name.ToLower());
+                        }
+                        foreach (Buff buff in gladiatorTwo.Buffs)
+                        {
+                            pTwoMsg.Buffs.Add(buff.Name.ToLower());
+                        }
+                        */
 
                         byte[] buffer;
                         string json = JsonSerializer.Serialize(pOneMsg);
@@ -123,27 +154,48 @@ namespace WebsocketApp
                     case Symbol.GameAction:
                         GameAction gAction = msg.content;
                         var skills = new SkillRepository();
-                        
+
                         if ((turnCount & 1) == 0)// gladiator a
                         {
                             if (new PID(long.Parse(gAction.PId)).ToString() == playerOne.ToString())
                             {
                                 skills.UseSkill(gAction.Action, gladiatorOne, gladiatorTwo);
+                                //deactive then remove buff if the turns == zero
+                                if (gladiatorOne.Buffs.Count > 0)
+                                {
+                                    foreach (Buff buff in gladiatorOne.Buffs)
+                                    {
+                                        buff.Turns--;
+                                        if (buff.Turns <= 0)
+                                            buff.DeActivate(gladiatorOne);
+                                    }
+                                    gladiatorOne.Buffs.RemoveAll(x => x.Turns <= 0);
+                                }
                             }
                             else
                             {
-                                //send back error or msg to sync?
+                                //send back msg to sync?
                             }
                         }
                         else // gladiator b
                         {
                             if (new PID(long.Parse(gAction.PId)).ToString() == playerOne.ToString())
-                            { 
-                                skills.UseSkill(gAction.Action, gladiatorTwo, gladiatorOne); 
+                            {
+                                skills.UseSkill(gAction.Action, gladiatorTwo, gladiatorOne);
+                                if (gladiatorTwo.Buffs.Count > 0)
+                                {
+                                    foreach (Buff buff in gladiatorTwo.Buffs)
+                                    {
+                                        buff.Turns--;
+                                        if (buff.Turns <= 0)
+                                            buff.DeActivate(gladiatorTwo);
+                                    }
+                                    gladiatorOne.Buffs.RemoveAll(x => x.Turns <= 0);
+                                }
                             }
                             else
                             {
-                                //send back error or msg to sync?
+                                //send back msg to sync?
                             }
                         }
                         turnCount++;
@@ -153,8 +205,19 @@ namespace WebsocketApp
                 }
                 if (!isFinished)
                 {
-
+                    if (gladiatorOne.Health <= 0)
+                        isFinished = true;
+                    if (gladiatorTwo.Health <= 0)
+                        isFinished = true;
                 }
+                if (isFinished)
+                {
+                    //if gladiatorOne is dead
+
+                    //if gladiatorTwo is dead
+                }
+
+
                 return null;
             };
 

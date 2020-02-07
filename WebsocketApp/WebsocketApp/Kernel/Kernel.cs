@@ -334,10 +334,15 @@ namespace GamesVonKoch.Core
         public void Send(PID to, Mail msg)
         {
             Console.WriteLine($"{to} <= {msg}");
-            kqueue.Enqueue(to);
+
             if (actors.ContainsKey(to))
             {
+                kqueue.Enqueue(to);
                 actors[to].AddMail(msg);
+            }
+            else 
+            {
+                //log/report back. if something goes mad crazy!!!!!!
             }
             //Step();
 

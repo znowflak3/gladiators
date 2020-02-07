@@ -51,7 +51,7 @@ namespace GladiatorDatabase
                 }
 
                  
-                /*
+                
                  * en ny komentar
                 Console.WriteLine("User Name:");
                 var name = Console.ReadLine();
@@ -112,7 +112,7 @@ public class Usermanager
             Console.WriteLine("User: {0} UserId: {1}", item.UserName, item.UserId);
         };
     }
-    /*
+    
     public void Update()
     {
         Console.WriteLine("\n*Update User*");
