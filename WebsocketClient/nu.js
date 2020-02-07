@@ -42,6 +42,8 @@ const Protocol /*: { [string]: number } */ = {
 	Deinitialize: 7,
 };
 
+const unit = "unit";
+
 const mail = (type, content) => ({type: type, content: content});
 
 const newKernel /*: number => Kernel */ = (iterations = 1024) => {
@@ -86,7 +88,9 @@ const newKernel /*: number => Kernel */ = (iterations = 1024) => {
 				store[to].mailbox.unshift(m);
 				queue.unshift(to);
 			}
-			else console.log("mail to", to, "which is a null address");
+			else {
+				console.log("mail to", to, "which is a null address", m);
+			}
 		},
 
 		loop: (pid, item) => {},
@@ -135,64 +139,135 @@ const actor /*: Behaviour => Behaviour */ = b => {
 	return wrapper;
 }
 
-const element /*: (HTMLElement, string, ElementBehaviour, HTMLElement => void) => Behaviour */ = (parent, elem, b, attr) => {
+const element /*: (HTMLElement, string, ElementBehaviour, HTMLElement => void) => Behaviour */ = (parent, elem, b) => {
 	let e = document.createElement(elem);
-	if (e !== null) {
-		attr(e);
-		parent.appendChild(e);
-		const wrapper = (runtime, self, m) => {
-			switch (m.type) {
-				case Protocol.ParentKilled:
-				case Protocol.ChildKilled:
-					runtime.die();
-					break;
-				case Protocol.Terminate:
-					parent.removeChild(e);
-					break;
-				default:
-					b(runtime, self, e, m);
-					break;
-			}
-		};
-		return wrapper;
-	}
-	return (r, s, m) => { r.die(); }
+	parent.appendChild(e);
+	const wrapper = (runtime, self, m) => {
+		switch (m.type) {
+			case Protocol.ParentKilled:
+			case Protocol.ChildKilled:
+				runtime.die();
+				return;
+			case Protocol.Terminate:
+				parent.removeChild(e);
+				return;
+			default:
+				b(runtime, self, e, m);
+				return;
+		}
+		throw "Unreachable";
+	};
+	return wrapper;
+}
+
+const init = (runtime, item, b) => {
+	let pid = runtime.spawn(b);
+	runtime.send(pid, mail(Protocol.Initialize, item));
+	return pid;
 }
 
 // ELEMENTS
 const div = (p, b, s) => element(p, "div", b, s);
 const input = (p, b, s) => element(p, "input", b, s);
 const button = (p, b, s) => element(p, "button", b, s);
+
 // GUI
+
+const DivActor = (parent, ...behaviours) => {
+	let children = [];
+	const wrapper = element(parent, "div", (runtime, self, elem, m) => {
+		switch (m.type) {
+			case Protocol.Initialize:
+				children = behaviours.map(b => init(runtime, "init", b(elem)));
+				return;
+			case Protocol.ParentKilled:
+			case Protocol.Terminate:
+				children.forEach(child => runtime.send(child, mail(Protocol.ParentKilled, "killed")));
+				return;
+		}
+	});
+	return wrapper;
+}
+
+const color = {
+	text: {color: "#000000", error: "#773322", background: "#ffffff"},
+};
+
+const LoginActor = (parent, recipent) => {
+	let login = {};
+	const wrapper = element(parent, "div", (runtime, self, parent, m) => {
+		switch (m.type) {
+			case Protocol.Initialize:
+
+				login.name = init(runtime, "init", (DivActor(parent, p => element(p, "input", (r, s, e, m) => {
+					console.log("here");
+					switch (m.type) {
+						case Protocol.Initialize:
+							return;
+					}
+				}))));
+
+				login.pass = init(runtime, "init", (DivActor(parent, p => element(p, "input", (r, s, e, m) => {
+					console.log("here");
+					switch (m.type) {
+						case Protocol.Initialize:
+							return;
+					}
+				}))));
+
+				login.submit = init(runtime, "init", (DivActor(parent,
+					p => element(p, "button", (r, s, e, m) => {
+						console.log("here");
+						switch (m.type) {
+							case Protocol.Initialize:
+								return;
+						}
+					}),
+					p => element(p, "input", (r, s, e, m) => {
+						console.log("here");
+						switch (m.type) {
+							case Protocol.Initialize:
+								return;
+						}
+					}))));
+				return;
+
+			case Protocol.Terminate:
+				for (let child in login) {
+					runtime.send(child, mail(Protocol.ParentKilled, "killed"));
+				}
+				return;
+		}
+	});
+
+	return wrapper;
+}
 
 // TEST
 const approot = document.getElementById("app-root");
-if (approot !== null) {
-	console.log("initializing kernel");
-	const kernel = newKernel(1024);
-	let children = [];
-	const root = kernel.spawn(actor((r, s, m) => {
-		console.log("root");
-		switch (m.type) {
-			case Protocol.Terminate:
-				children.forEach(c => r.send(c, mail(Protocol.ParentKilled, "ha")));
-				console.log(m.content);
-				break;
-			case Protocol.Initialize:
-				console.log("initialized");
-				children.unshift(r.spawn(input(approot, (r, _, e, m) => {
-				}, e => {
-					e.onclick = k => r.send(s, mail(Protocol.Terminate, k));
-				})));
-				break;
-			default:
-				throw "unhandled message";
-		}
-	}));
-	kernel.send(root, mail(Protocol.Initialize, 0));
-	const loop = () => {
-		kernel.step();
-		window.requestAnimationFrame(loop);
+console.log("initializing kernel");
+const kernel = newKernel(1024);
+let children = [];
+const root = kernel.spawn(actor((r, s, m) => {
+	switch (m.type) {
+		case Protocol.Terminate:
+			break;
+		case Protocol.Initialize:
+			const login = r.spawn(LoginActor(approot, 0));
+			r.send(login, mail(Protocol.Initialize, "hi"));
+			break;
+		default:
+			throw "unhandled message";
 	}
-	loop();
+}));
+kernel.send(root, mail(Protocol.Initialize, 0));
+
+let iter = 0;
+const loop = () => {
+	kernel.step();
+	console.log("iteration", iter);
+	iter += 1;
+	setTimeout(loop, 500);
 }
+
+loop();
