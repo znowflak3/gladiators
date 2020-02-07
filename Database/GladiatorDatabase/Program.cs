@@ -26,7 +26,7 @@ namespace GladiatorDatabase
                         
                         Usermanager usermanager = new Usermanager(db);
                         usermanager.Read();
-                        usermanager.Update();
+                        //usermanager.Update();
                         break;
                     case ConsoleKey.D2:
                         Console.WriteLine("Lanistas: ");
@@ -112,6 +112,7 @@ public class Usermanager
             Console.WriteLine("User: {0} UserId: {1}", item.UserName, item.UserId);
         };
     }
+    /*
     public void Update()
     {
         Console.WriteLine("\n*Update User*");
@@ -165,7 +166,7 @@ public class Usermanager
         }
 
 
-    }
+    }*/
     public void Destroy()
     {
         Console.WriteLine("\n*Destroy User*");
@@ -217,6 +218,7 @@ public class Gladiator
        public int Strength;
        public int Defense;
     }
+
     public int Wins { get; set; }
     public int Loss { get; set; }
     public int Kills { get; set; }

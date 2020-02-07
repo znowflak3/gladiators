@@ -39,10 +39,10 @@ namespace WebsocketApp
             _websockets = new List<WebSocket>();
             _kernel = new Kernel(0, (rt, self, _, msg) =>
             {
-                var login_pid = rt.Spawn(null, Login());
-                var sessionManager_pid = rt.SpawnLink(login_pid, SessionManager());
-                var log_pid = rt.SpawnLink(login_pid, Log());
-                var echo_pid = rt.Spawn(null, Echo());
+                var login_pid = rt.Spawn(null, Actors.Login());
+                var sessionManager_pid = rt.SpawnLink(login_pid, Actors.SessionManager());
+                var log_pid = rt.SpawnLink(login_pid, Actors.Log());
+                var echo_pid = rt.Spawn(null, Actors.Echo());
 
                 _sessionManager_pid = sessionManager_pid;
                 _echo_pid = echo_pid;
@@ -54,187 +54,7 @@ namespace WebsocketApp
             
             
         }
-        ActorMeth ClientProxy()
-        {
-            ActorMeth behaviour = (rt, self, _, msg) =>
-            {
-                return null;
-            };
-            return behaviour;
-        }
-        ActorMeth SessionManager()
-        {
-            Queue<PID> playQueue = new Queue<PID>();
-            Dictionary<PID, PID> clientToGames = new Dictionary<PID, PID>();
-            
-            ActorMeth behaviour = (rt, self, _, msg) =>
-            {
-                switch (msg.mtype)
-                {
-                    case Symbol.QueueGame:
-                        PID key = new PID(long.Parse(msg.content.pId));
-                        if (!playQueue.Contains(key))
-                        {
-                            playQueue.Enqueue(key);
-                        }
-                        if (playQueue.Count > 1)
-                        {
-                            var playerOne = playQueue.Dequeue();
-                            var playerTwo = playQueue.Dequeue();
-                            PID[] players = new PID[] { playerOne, playerTwo };
-                            var gameManager_pid = rt.SpawnLink(null, GameManager());
-                            clientToGames.Add(playerOne, gameManager_pid);
-                            clientToGames.Add(playerTwo, gameManager_pid);
-                            rt.Send(gameManager_pid, new Mail(Symbol.Init, players));
-                        }
-                        break;
-                    case Symbol.GameAction:
-                        var to = clientToGames[new PID(long.Parse(msg.content.pId))];
-                        rt.Send(to, msg);
-                        break;
-                    default:
-                        break;
-                }
-                return null;
-            };
-            
-            return behaviour;
-        }
-        static ActorMeth SessionRelay()
-        {
-            ActorMeth behaviour = (rt, self, _, msg) =>
-                {
-                    return null;
-                };
-            return behaviour;
-        }
-        static ActorMeth GameManager()
-        {
-            Gladiator gladiatorOne = new Gladiator()
-            {
-                GladiatorId = 1
-            };
-            Stats statsOne = new Stats()
-            {
-                Health = 100,
-                Defense = 10,
-                Stamina = 10,
-                Morale = 10,
-                Speed = 10,
-                Strength = 10
-            };
-            Gladiator gladiatorTwo = new Gladiator()
-            {
-                GladiatorId = 1
-            };
-            Stats statsTwo = new Stats()
-            {
-                Health = 100,
-                Defense = 10,
-                Stamina = 10,
-                Morale = 10,
-                Speed = 10,
-                Strength = 10
-            };
-
-            int turnCount = 0;
-
-            PID playerOne;
-            PID playerTwo;
-
-            bool isFinished = false;
-
-            ActorMeth behaviour = (rt, self, _, msg) =>
-        {
-            switch (msg.mtype)
-            {
-                case Symbol.Init:
-                    playerOne = msg.content[0];
-                    playerTwo = msg.content[1];
-                    break;
-                case Symbol.AddChild:
-                    //add serverReelay
-                    break;
-                case Symbol.GameAction:
-                    if ((turnCount & 1) == 0)// gladiator a
-                    {
-
-                    }
-                    else // gladiator b
-                    {
-
-                    }
-                    turnCount++;
-                    break;
-                default:
-                    break;
-            }
-            if (!isFinished)
-            { 
-                
-            }
-            return null;
-        };
-
-            return behaviour;
-        }
-
-        ActorMeth Log()
-        {
-            ActorMeth behaviour = (rt, self, state, msg) =>
-        {
-            return null;
-        };
-            return behaviour;
-        }
-
-        static ActorMeth Database()
-        {
-            ActorMeth behaviour = (rt, self, _, msg) =>
-            {
-                return null;
-            };
-            return behaviour;
-        }
-        static ActorMeth Login()
-        {
-            ActorMeth behaviour = (rt, self, _, msg) =>
-            {
-                switch (msg.mtype)
-                {
-                    case Symbol.Authorize:
-                        //check if user exist
-                        //check if password matches.
-                        //add socket to socketDictionary.
-                        break;
-                    case Symbol.CreateUser:
-
-                        break;
-                    default:
-                        break;
-                }
-                return null;
-            };
-            return behaviour;
-        }
-        static ActorMeth Echo()
-        {
-            ActorMeth behaviour = (rt, self, _, msg) =>
-            {
-                if (msg.mtype == Symbol.Echo)
-                {
-                    byte[] buffer;
-                    string json = JsonSerializer.Serialize<JsonPID>(msg.content);
-                    buffer = Encoding.UTF8.GetBytes(json);
-                    PID webSocketKey = new PID(long.Parse(msg.content.pId));
-                    WebSocket socket = rt.GetWebSocket(webSocketKey);
-                    socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-                }
-                return null;
-            };
-            return behaviour;
-        }
-
+ 
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -296,6 +116,7 @@ namespace WebsocketApp
                                         }
                                         catch (JsonException ex)
                                         {
+                                            Console.WriteLine(ex.Message);
                                             mType = new MType("error");
                                             //await webSocket.SendAsync();
                                         }
@@ -313,7 +134,7 @@ namespace WebsocketApp
                                 case "authorize":
                                     if (content.Username == "user" && content.Password == "pass")
                                     {
-                                        client_pid = _kernel.Spawn(null, ClientProxy());
+                                        client_pid = _kernel.Spawn(null, Actors.ClientProxy());
 
                                         _kernel.Send(_sessionManager_pid, new Mail(Symbol.AddChild, client_pid));
 
