@@ -20,13 +20,13 @@
 }
 //gameAttack
 {
-	"MailType":"gameattack"
+	"MailType":"gameaction"
 }
 {
-	"pId":"value",
-	"action":"value/attack", //only support attack action at moment
-	"target":"value", // can be null at the moment
-	"turnCount":"value"
+	"PId":"value",
+	"Action":"value/attack", //only support attack action at moment
+	"Target":"value", // can be null at the moment
+	"TurnCount":(int)value
 }
 => sends back =>
 {

@@ -7,9 +7,9 @@ namespace WebsocketApp.JsonModels
 {
     public class GameAction
     {
-        public string pId { get; set; }
-        public string action { get; set; }
-        public string target { get; set; }
-        public string turnCount { get; set; }
+        public string PId { get; set; }
+        public string Action { get; set; }
+        public string Target { get; set; }
+        public string TurnCount { get; set; }
     }
 }

@@ -25,6 +25,7 @@ namespace GladiatorDatabase
                         var crud = Console.ReadKey();
                         
                         Usermanager usermanager = new Usermanager(db);
+
                         //usermanager.Create();
                         //usermanager.Read();
                         //usermanager.Update();
@@ -51,6 +52,7 @@ namespace GladiatorDatabase
                         Console.WriteLine("1: Create. 2: Read. 3: Update. 4: Destroy.");
                         break;
                 }
+
                 
                 Console.WriteLine("**********");
                 Console.ReadKey();
@@ -110,18 +112,17 @@ public class Usermanager
         user.UserName = userName;
         user.Password = password;
         user.Email = email;
-        
+
         Console.WriteLine("Confirm [y]: ");
         var key = Console.ReadKey();
-        if(key.Key == ConsoleKey.Y) 
+        if (key.Key == ConsoleKey.Y)
         {
             DB.Users.Update(user);
             DB.SaveChanges();
         }
-
-
     }
     public void Destroy(User user)
+
     {
         Console.WriteLine("\n*Destroy User*");
         DB.Users.Remove(user);
