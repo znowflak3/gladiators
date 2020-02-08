@@ -40,6 +40,11 @@ const Protocol /*: { [string]: number } */ = {
 	LogItem: 5,
 	Initialize: 6,
 	Deinitialize: 7,
+	WebSocketMessage: 8,
+	WebSocketOpen: 9,
+	WebSocketSend: 10,
+	WebSocketClose: 11,
+	WebSocketError: 12,
 };
 
 const unit = "unit";
@@ -193,14 +198,37 @@ const color = {
 	text: {color: "#000000", error: "#773322", background: "#ffffff"},
 };
 
+const WebSocketActor = to => {
+	let socket = undefined;
+	return wrapper = actor((runtime, self, m) => {
+		switch (m.type) {
+			case Protocol.Initialize:
+				socket = new WebSocket(m.content);
+				socket.onmessage = ev =>
+					runtime.send(to , mail(Protocol.WebSocketMessage, ev.data));
+				socket.onopen = ev =>
+					runtime.send(to, mail(Protocol.WebSocketOpen, "socket open"));
+				return;
+			case Protocol.WebSocketSend:
+				socket.send(m.content);
+				return;
+			case Protocol.Terminate:
+				socket.close();
+				return;
+		}
+	});
+	return wrapper;
+}
+
+
 const LoginActor = (parent, recipent) => {
 	let login = {};
+	let message = {};
 	const wrapper = element(parent, "div", (runtime, self, parent, m) => {
 		switch (m.type) {
 			case Protocol.Initialize:
 
 				login.name = init(runtime, "init", (DivActor(parent, p => element(p, "input", (r, s, e, m) => {
-					console.log("here");
 					switch (m.type) {
 						case Protocol.Initialize:
 							return;
@@ -208,7 +236,6 @@ const LoginActor = (parent, recipent) => {
 				}))));
 
 				login.pass = init(runtime, "init", (DivActor(parent, p => element(p, "input", (r, s, e, m) => {
-					console.log("here");
 					switch (m.type) {
 						case Protocol.Initialize:
 							return;
@@ -217,16 +244,15 @@ const LoginActor = (parent, recipent) => {
 
 				login.submit = init(runtime, "init", (DivActor(parent,
 					p => element(p, "button", (r, s, e, m) => {
-						console.log("here");
 						switch (m.type) {
 							case Protocol.Initialize:
 								return;
 						}
 					}),
 					p => element(p, "input", (r, s, e, m) => {
-						console.log("here");
 						switch (m.type) {
 							case Protocol.Initialize:
+								e.type = "checkbox";
 								return;
 						}
 					}))));
@@ -243,20 +269,29 @@ const LoginActor = (parent, recipent) => {
 	return wrapper;
 }
 
+// ws://demos.kaazing.com/echo
+
 // TEST
 const approot = document.getElementById("app-root");
 console.log("initializing kernel");
 const kernel = newKernel(1024);
 let children = [];
+let ws = undefined;
 const root = kernel.spawn(actor((r, s, m) => {
 	switch (m.type) {
 		case Protocol.Terminate:
 			break;
 		case Protocol.Initialize:
-			const login = r.spawn(LoginActor(approot, 0));
-			r.send(login, mail(Protocol.Initialize, "hi"));
+			//const login = r.spawn(LoginActor(approot, 0));
+			//r.send(login, mail(Protocol.Initialize, "hi"));
+			ws = r.spawn(WebSocketActor(s));
+			r.send(ws, mail(Protocol.Initialize, "ws://demos.kaazing.com/echo"));
+			break;
+		case Protocol.WebSocketOpen:
+			r.send(ws, mail(Protocol.WebSocketSend, "foo"));
 			break;
 		default:
+			console.log(m);
 			throw "unhandled message";
 	}
 }));
