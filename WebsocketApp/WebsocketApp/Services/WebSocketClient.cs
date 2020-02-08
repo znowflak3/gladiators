@@ -11,7 +11,7 @@ namespace WebsocketApp.Services
 {
     public static class WebSocketClient
     {
-        public static void SendReturnMessage(WebSocket socket, string json)
+        public static void SendMessage(WebSocket socket, string json)
         {
             byte[] buffer;
             buffer = Encoding.UTF8.GetBytes(json);

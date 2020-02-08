@@ -16,14 +16,6 @@ namespace WebsocketApp
 {
     public static class Actors
     {
-        public static ActorMeth ClientProxy()
-        {
-            ActorMeth behaviour = (rt, self, _, msg) =>
-            {
-                return null;
-            };
-            return behaviour;
-        }
         public static ActorMeth SessionManager()
         {
             Queue<PID> playQueue = new Queue<PID>();
@@ -51,8 +43,11 @@ namespace WebsocketApp
                         }
                         break;
                     case Symbol.GameAction:
-                        var to = clientToGames[new PID(long.Parse(msg.content.PId))];
-                        rt.Send(to, msg);
+                        if (clientToGames.ContainsKey(new PID(long.Parse(msg.content.PId))))
+                        {
+                            var to = clientToGames[new PID(long.Parse(msg.content.PId))];
+                            rt.Send(to, msg);
+                        }
                         break;
                     case Symbol.Killed:
                         foreach (PID pid in msg.content)
@@ -68,14 +63,6 @@ namespace WebsocketApp
 
             return behaviour;
         }
-        public static ActorMeth SessionRelay()
-        {
-            ActorMeth behaviour = (rt, self, _, msg) =>
-            {
-                return null;
-            };
-            return behaviour;
-        }
         public static ActorMeth GameManager(PID pid)
         {
             BattleGladiator gladiatorOne = new BattleGladiator();
@@ -89,7 +76,7 @@ namespace WebsocketApp
             PID playerTwo = new PID();
 
             bool isFinished = false;
-            
+
 
             ActorMeth behaviour = (rt, self, _, msg) =>
             {
@@ -103,13 +90,11 @@ namespace WebsocketApp
                         playerOne = msg.content[0];
                         playerTwo = msg.content[1];
 
-                        pOneMsg = GameManagerService.GetReturnMessage(gladiatorOne, turnCount);
-                        pOneMsg.Turn = "gladiatorOne";
-                        GameManagerService.ReturnMessage(rt.GetWebSocket(playerOne), pOneMsg);
+                        var startOneMsg = GameManagerService.GetStartMessage(gladiatorOne, gladiatorTwo, playerOne);
+                        GameManagerService.SendStartMessage(rt.GetWebSocket(playerOne), startOneMsg);
 
-                        pTwoMsg = GameManagerService.GetReturnMessage(gladiatorTwo, turnCount);
-                        pTwoMsg.Turn = "gladiatorOne";
-                        GameManagerService.ReturnMessage(rt.GetWebSocket(playerTwo), pTwoMsg);
+                        var startTwoMsg = GameManagerService.GetStartMessage(gladiatorTwo, gladiatorOne, playerOne);
+                        GameManagerService.SendStartMessage(rt.GetWebSocket(playerTwo), startTwoMsg);
                         break;
                     case Symbol.GameAction:
                         GameAction gAction = msg.content;
@@ -138,9 +123,9 @@ namespace WebsocketApp
                             }
 
                         }
-                        else // gladiator b
+                        else if ((turnCount & 1) != 0) // gladiator b
                         {
-                            if (new PID(long.Parse(gAction.PId)).ToString() == playerOne.ToString())
+                            if (new PID(long.Parse(gAction.PId)).ToString() == playerTwo.ToString())
                             {
                                 skills.UseSkill(gAction.Action, gladiatorTwo, gladiatorOne);
                                 if (gladiatorTwo.Buffs.Count > 0)
@@ -151,7 +136,7 @@ namespace WebsocketApp
                                         if (buff.Turns <= 0)
                                             buff.DeActivate(gladiatorTwo);
                                     }
-                                    gladiatorOne.Buffs.RemoveAll(x => x.Turns <= 0);
+                                    gladiatorTwo.Buffs.RemoveAll(x => x.Turns <= 0);
                                 }
                             }
                             else
@@ -165,13 +150,21 @@ namespace WebsocketApp
                         pTwoMsg = GameManagerService.GetReturnMessage(gladiatorTwo, turnCount);
                         if ((turnCount & 1) == 0)
                         {
-                            pOneMsg.Turn = "gladiatorOne";
-                            pTwoMsg.Turn = "gladiatorOne";
+                            pOneMsg.Turn = playerOne.ToString();
+                            pTwoMsg.Turn = playerOne.ToString();
+                            pOneMsg.GOneHealth = gladiatorOne.Health.ToString();
+                            pTwoMsg.GOneHealth = gladiatorOne.Health.ToString();
+                            pOneMsg.GTwoHealth = gladiatorTwo.Health.ToString();
+                            pTwoMsg.GTwoHealth = gladiatorTwo.Health.ToString();
                         }
-                        else
+                        else if ((turnCount & 1) != 0)
                         {
-                            pOneMsg.Turn = "gladiatorTwo";
-                            pTwoMsg.Turn = "gladiatorTwo";
+                            pOneMsg.Turn = playerTwo.ToString();
+                            pTwoMsg.Turn = playerTwo.ToString();
+                            pOneMsg.GOneHealth = gladiatorOne.Health.ToString();
+                            pTwoMsg.GOneHealth = gladiatorOne.Health.ToString();
+                            pOneMsg.GTwoHealth = gladiatorTwo.Health.ToString();
+                            pTwoMsg.GTwoHealth = gladiatorTwo.Health.ToString();
                         }
                         if (!isFinished)
                         {
@@ -184,20 +177,20 @@ namespace WebsocketApp
                             if (gladiatorTwo.Health <= 0)
                             {
                                 pOneMsg.Winner = gladiatorOne.Name;
-                                pOneMsg.Winner = gladiatorOne.Name;
+                                pTwoMsg.Winner = gladiatorOne.Name;
                                 isFinished = true;
                             }
                         }
+
+                        GameManagerService.SendReturnMessage(rt.GetWebSocket(playerOne), pOneMsg);
+                        GameManagerService.SendReturnMessage(rt.GetWebSocket(playerTwo), pTwoMsg);
+
                         if (isFinished)
                         {
-                            //send result to database
-                            //kill gamemanager actor
-                            PID[] players = new PID[]{ playerOne, playerTwo };
+                            PID[] players = new PID[] { playerOne, playerTwo };
                             rt.Send(parent, new Mail(Symbol.Killed, players));
                             rt.Die();
                         }
-                        GameManagerService.ReturnMessage(rt.GetWebSocket(playerOne), pOneMsg);
-                        GameManagerService.ReturnMessage(rt.GetWebSocket(playerTwo), pTwoMsg);
                         break;
                     default:
                         break;
@@ -219,6 +212,14 @@ namespace WebsocketApp
         }
 
         public static ActorMeth Database()
+        {
+            ActorMeth behaviour = (rt, self, _, msg) =>
+            {
+                return null;
+            };
+            return behaviour;
+        }
+        public static ActorMeth ClientProxy()
         {
             ActorMeth behaviour = (rt, self, _, msg) =>
             {

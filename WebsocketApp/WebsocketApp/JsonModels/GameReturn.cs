@@ -11,10 +11,8 @@ namespace WebsocketApp.JsonModels
         public string GOneHealth { get; set; }
         public string GTwoHealth { get; set; }
         //the clients gladiator
-        public string YourGladiator { get; set; }
-        public List<string> Skills { get; set; }
         public List<string> Buffs { get; set; }
-        //if it is clients turn to attack
+        //if it is clients turn to attack || identify with client_pid
         public string Turn { get; set; }
         public string TurnCount { get; set; }
         public string Winner { get; set; }
