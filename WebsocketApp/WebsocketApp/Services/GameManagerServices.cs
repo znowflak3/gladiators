@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using WebsocketApp.Battle;
 using WebsocketApp.Battle.Skills;
@@ -8,9 +12,9 @@ using WebsocketApp.JsonModels;
 
 namespace WebsocketApp.Services
 {
-    public class GameManagerService
+    public static class GameManagerService
     {
-        public GameReturn GetReturnMessage(BattleGladiator gladiator)
+        public static GameReturn GetReturnMessage(BattleGladiator gladiator)
         {
             var result = new GameReturn()
             {
@@ -31,6 +35,11 @@ namespace WebsocketApp.Services
                 result.Buffs.Add(buff.Name.ToLower());
             }
             return result;
+        }
+        public static void ReturnMessage(WebSocket socket, GameReturn msg)
+        {
+            string json = JsonSerializer.Serialize(msg);
+            WebSocketClient.SendReturnMessage(socket, json);
         }
     }
 }

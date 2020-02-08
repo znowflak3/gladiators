@@ -44,15 +44,21 @@ namespace WebsocketApp
                             var playerOne = playQueue.Dequeue();
                             var playerTwo = playQueue.Dequeue();
                             PID[] players = new PID[] { playerOne, playerTwo };
-                            var gameManager_pid = rt.SpawnLink(null, GameManager());
+                            var gameManager_pid = rt.SpawnLink(null, GameManager(self));
                             clientToGames.Add(playerOne, gameManager_pid);
                             clientToGames.Add(playerTwo, gameManager_pid);
                             rt.Send(gameManager_pid, new Mail(Symbol.Init, players));
                         }
                         break;
                     case Symbol.GameAction:
-                        var to = clientToGames[new PID(long.Parse(msg.content.pId))];
+                        var to = clientToGames[new PID(long.Parse(msg.content.PId))];
                         rt.Send(to, msg);
+                        break;
+                    case Symbol.Killed:
+                        foreach (PID pid in msg.content)
+                        {
+                            clientToGames.Remove(pid);
+                        }
                         break;
                     default:
                         break;
@@ -70,86 +76,40 @@ namespace WebsocketApp
             };
             return behaviour;
         }
-        public static ActorMeth GameManager()
+        public static ActorMeth GameManager(PID pid)
         {
             BattleGladiator gladiatorOne = new BattleGladiator();
+            gladiatorOne.Name = "gladiatorOne";
             BattleGladiator gladiatorTwo = new BattleGladiator();
+            gladiatorTwo.Name = "gladiatorTwo";
 
             int turnCount = 0;
-
+            PID parent = pid;
             PID playerOne = new PID();
             PID playerTwo = new PID();
 
             bool isFinished = false;
+            
 
             ActorMeth behaviour = (rt, self, _, msg) =>
             {
+                GameReturn pOneMsg = new GameReturn();
+                GameReturn pTwoMsg = new GameReturn();
+
+
                 switch (msg.mtype)
                 {
                     case Symbol.Init:
                         playerOne = msg.content[0];
                         playerTwo = msg.content[1];
 
-                        var pOneMsg = new GameManagerService().GetReturnMessage(gladiatorOne);
-                        pOneMsg.TurnCount = turnCount;
-                        pOneMsg.YourGladiator = "gladiatorOne";
-                        pOneMsg.YourTurn = "gladiatorOne";
+                        pOneMsg = GameManagerService.GetReturnMessage(gladiatorOne, turnCount);
+                        pOneMsg.Turn = "gladiatorOne";
+                        GameManagerService.ReturnMessage(rt.GetWebSocket(playerOne), pOneMsg);
 
-                        var pTwoMsg = new GameManagerService().GetReturnMessage(gladiatorTwo);
-                        pTwoMsg.TurnCount = turnCount;
-                        pTwoMsg.YourGladiator = "gladiatorTwo";
-                        pTwoMsg.YourTurn = "gladiatorOne";
-                  
-                        /*new GameReturn()
-                        {
-                            GOneHealth = gladiatorOne.Health.ToString(),
-                            GTwoHealth = gladiatorTwo.Health.ToString(),
-                            YourGladiator = "gladiatorOne",
-                            YourTurn = "gladiatorOne",
-                            TurnCount = turnCount.ToString(),
-                            Skills = new List<string>(),
-                            Buffs = new List<string>()
-                        };
-                        foreach (Skill skill in gladiatorOne.Skills)
-                        {
-                            pOneMsg.Skills.Add(skill.Name.ToLower());
-                        }
-                        foreach (Buff buff in gladiatorOne.Buffs)
-                        {
-                            pOneMsg.Buffs.Add(buff.Name.ToLower());
-                        }*/
-                        /*
-                        var pTwoMsg = new GameReturn()
-                        {
-                            GOneHealth = gladiatorOne.Health.ToString(),
-                            GTwoHealth = gladiatorTwo.Health.ToString(),
-                            YourGladiator = "gladiatorTwo",
-                            YourTurn = "gladiatorOne",
-                            TurnCount = turnCount.ToString(),
-                            Skills = new List<string>(),
-                            Buffs = new List<string>()
-                        };
-                        foreach(Skill skill in gladiatorTwo.Skills)
-                        {
-                            pTwoMsg.Skills.Add(skill.Name.ToLower());
-                        }
-                        foreach (Buff buff in gladiatorTwo.Buffs)
-                        {
-                            pTwoMsg.Buffs.Add(buff.Name.ToLower());
-                        }
-                        */
-
-                        byte[] buffer;
-                        string json = JsonSerializer.Serialize(pOneMsg);
-
-                        buffer = Encoding.UTF8.GetBytes(json);
-                        WebSocket socketOne = rt.GetWebSocket(playerOne);
-                        socketOne.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-
-                        json = JsonSerializer.Serialize(pTwoMsg);
-                        buffer = Encoding.UTF8.GetBytes(json);
-                        WebSocket socketTwo = rt.GetWebSocket(playerTwo);
-                        socketTwo.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                        pTwoMsg = GameManagerService.GetReturnMessage(gladiatorTwo, turnCount);
+                        pTwoMsg.Turn = "gladiatorOne";
+                        GameManagerService.ReturnMessage(rt.GetWebSocket(playerTwo), pTwoMsg);
                         break;
                     case Symbol.GameAction:
                         GameAction gAction = msg.content;
@@ -176,6 +136,7 @@ namespace WebsocketApp
                             {
                                 //send back msg to sync?
                             }
+
                         }
                         else // gladiator b
                         {
@@ -199,24 +160,48 @@ namespace WebsocketApp
                             }
                         }
                         turnCount++;
+                        //send synced userdata back to user
+                        pOneMsg = GameManagerService.GetReturnMessage(gladiatorOne, turnCount);
+                        pTwoMsg = GameManagerService.GetReturnMessage(gladiatorTwo, turnCount);
+                        if ((turnCount & 1) == 0)
+                        {
+                            pOneMsg.Turn = "gladiatorOne";
+                            pTwoMsg.Turn = "gladiatorOne";
+                        }
+                        else
+                        {
+                            pOneMsg.Turn = "gladiatorTwo";
+                            pTwoMsg.Turn = "gladiatorTwo";
+                        }
+                        if (!isFinished)
+                        {
+                            if (gladiatorOne.Health <= 0)
+                            {
+                                pOneMsg.Winner = gladiatorTwo.Name;
+                                pTwoMsg.Winner = gladiatorTwo.Name;
+                                isFinished = true;
+                            }
+                            if (gladiatorTwo.Health <= 0)
+                            {
+                                pOneMsg.Winner = gladiatorOne.Name;
+                                pOneMsg.Winner = gladiatorOne.Name;
+                                isFinished = true;
+                            }
+                        }
+                        if (isFinished)
+                        {
+                            //send result to database
+                            //kill gamemanager actor
+                            PID[] players = new PID[]{ playerOne, playerTwo };
+                            rt.Send(parent, new Mail(Symbol.Killed, players));
+                            rt.Die();
+                        }
+                        GameManagerService.ReturnMessage(rt.GetWebSocket(playerOne), pOneMsg);
+                        GameManagerService.ReturnMessage(rt.GetWebSocket(playerTwo), pTwoMsg);
                         break;
                     default:
                         break;
                 }
-                if (!isFinished)
-                {
-                    if (gladiatorOne.Health <= 0)
-                        isFinished = true;
-                    if (gladiatorTwo.Health <= 0)
-                        isFinished = true;
-                }
-                if (isFinished)
-                {
-                    //if gladiatorOne is dead
-
-                    //if gladiatorTwo is dead
-                }
-
 
                 return null;
             };

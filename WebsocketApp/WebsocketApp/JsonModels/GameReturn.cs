@@ -15,7 +15,8 @@ namespace WebsocketApp.JsonModels
         public List<string> Skills { get; set; }
         public List<string> Buffs { get; set; }
         //if it is clients turn to attack
-        public string YourTurn { get; set; }
-        public int TurnCount { get; set; }
+        public string Turn { get; set; }
+        public string TurnCount { get; set; }
+        public string Winner { get; set; }
     }
 }
