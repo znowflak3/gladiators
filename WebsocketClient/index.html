@@ -13,6 +13,15 @@
   display: flex;
   align-items: center;
 }
+
+.success-color {
+  background: "#228822";
+  color: "#ffffff";
+}
+.error-color {
+  background: "#882222";
+  color: "#ffffff";
+}
 </style>
   </head>
   <body>
@@ -55,14 +64,21 @@
           let valid = /^[a-zA-Z0-9]*$/g;
           let valid0 = /^[a-zA-Z0-9]*$/g;
           if (valid.test(loginname.value) && valid0.test(loginpass.value)) {
-            const mail = JSON.stringify({
-              "Username": loginname.value,
-              "Password": loginpass.value
-            });
+            if (loginreg.checked) {
+              const mail = JSON.stringify({
+                "Username": loginname.value,
+                "Password": loginpass.value,
+                "Email": loginemail.value
+              });
+            } else {
+              const mail = JSON.stringify({
+                "Username": loginname.value,
+                "Password": loginpass.value
+              });
+            }
             const type = JSON.stringify({
               "MailType": (loginreg.checked? "clientregister":"clientlogin")}
             );
-            if (loginreg.checked) mail["Email"] = loginemail.value;
             const msg = type + mail;
             console.log(">>>", msg);
             socket.send(msg);
@@ -107,16 +123,40 @@
           "buy": 4,
         }
 
-        let state = {};
+        let state = {items: []};
 
         socket.onmessage = msg => {
           console.log("<<<", msg);
           switch (protocol[content.MailType]) {
             case protocol.clientlogin:
+              if (content.Pid == "rejected") {
+                alert("rejected, try again");
+              } else {
+                console.log("-!-", "connected");
+                state.pid = content.Pid;
+                free(login);
+              }
               return;
+
+            case protocol.clientregister:
+              if (content.Pid == "register") {
+                alert("rejected, try another name");
+              } else {
+                console.log("-!-", "connected");
+                state.pid = content.Pid;
+                free(login);
+              }
+              return;
+
             case protocol.buy:
-              // TODO
+              if (content.Rejected) {
+                // TODO: ADD DIALOG
+              } else {
+                // TODO: ADD BOUGHT
+                state.items.push(content.Item);
+              }
               return;
+
             // TODO: ADD HANDLING OF MAIL TYPES
             default:
               console.log(content);
@@ -140,6 +180,7 @@
         addStoreItem("foo", "bar", 4);
       }
     </script>
+
     <div id="app-root" class="container">
       <div id="login" class="d-flex justify-content-center vertical-center">
         <div>
@@ -155,12 +196,26 @@
           </div>
         </div>
       </div>
-      <div id="store"></div>
-      <div id="battle">
-        <div class="d-flex justify-content-between">
-          <button id="battle"></button>
+      <div id="tabs" class="d-flex justify-content-between">
+        <button id="tabsbattle" class="btn-secondary">Battle</button>
+        <button id="tabsstore" class="btn-secondary">Store</button>
+        <button id="tabseditor" class="btn-secondary">Editor</button>
+        <button id="tabshighscore" class="btn-secondary">Highscore</button>
+      </div>
+      <div id="screen">
+        <div id="battle">
+          <div class="d-flex justify-content-between">
+            <button>Attack</button>
+            <button>Guard</button>
+          </div>
         </div>
+        <div id="lobby">
+          <div class="d-flex justify-content-center">S E S S I O N  L O B B Y</div>
+          <div id="sessionlist"></div>
+        </div>
+        <div id="store"></div>
       </div>
     </div>
+
   </body>
 </html>
