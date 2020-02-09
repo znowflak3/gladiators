@@ -62,7 +62,13 @@
         const displayError = display("#882222");
         const displaySuccess = display("#228822");
         // APP
-        let state = {items: [], inqueue: false, store: []};
+
+        // EDITOR has to be defined here to be the default screen
+
+        const editor = document.getElementById("editor");
+
+
+        let state = {items: [], inqueue: false, store: [], last: editor};
         let socket = new WebSocket('wss://localhost:44333/ws');
         socket.onclose = _ => { displayError("lost connection"); }
         socket.onerror = e => { alert("error", e); }
@@ -136,21 +142,18 @@
           store.appendChild(child);
         }
 
-        const tabsstore = document.getElementById("tabsstore");
-        tabsstore.onclick = _ => {
-          const type = JSON.stringify({"MailType": "items"});
-          const mail = JSON.stringify({"PId": state.pid});
-          const msg = type + mail;
-          console.log(">>>", msg);
-          socket.send(msg);
-        }
-
         // BATTLE
+        const battle = document.getElementById("battle");
         const gameAction = action => {
           ;
         }
 
+        // HIGHSCORE
+
+        const highscore = document.getElementById("highscore");
+
         // SESSION
+        const lobby = document.getElementById("lobby");
         const queuesubmit = document.getElementById("queuesubmit");
         queuesubmit.onclick = queueGame = () => {
           if (!state.inqueue) {
@@ -161,6 +164,48 @@
             socket.send(msg);
           }
         }
+
+        const tabseditor = document.getElementById("tabseditor");
+        tabseditor.onclick = _ => {
+          hide(state.last);
+          show(editor);
+          state.last = editor;
+        }
+
+        const tabsbattle = document.getElementById("tabsbattle");
+        tabsbattle.onclick = _ => {
+          hide(state.last);
+          show(battle);
+          state.last = battle;
+        }
+
+        const tabshighscore = document.getElementById("tabshighscore");
+        tabshighscore.onclick = _ => {
+          hide(state.last);
+          show(highscore);
+          state.last = highscore;
+        }
+
+        const tabslobby = document.getElementById("tabslobby");
+        tabslobby.onclick = _ => {
+          hide(state.last);
+          show(lobby);
+          state.last = lobby;
+        }
+
+        const tabsstore = document.getElementById("tabsstore");
+        tabsstore.onclick = _ => {
+          hide(state.last);
+          show(store);
+          state.last = store;
+          const type = JSON.stringify({"MailType": "items"});
+          const mail = JSON.stringify({"PId": state.pid});
+          const msg = type + mail;
+          console.log(">>>", msg);
+          socket.send(msg);
+        }
+
+        const screen = document.getElementById("game");
 
         // STATE MACHINE
         const protocol = {
@@ -184,6 +229,7 @@
                 console.log("-!-", "connected");
                 state.pid = content.PId;
                 free(login);
+                show(screen);
                 login.parentNode.removeChild(login);
               }
               return;
@@ -213,8 +259,13 @@
           }
         }
 
+        hide(store);
+        hide(lobby);
+        hide(battle);
+        hide(highscore);
+        hide(screen);
+
         // TEST
-        addStoreItem("gladiator", "bar", 4);
       }
     </script>
 
@@ -234,26 +285,33 @@
           </div>
         </div>
       </div>
-      <div id="tabs" class="d-flex justify-content-between">
-        <button id="tabsbattle" class="btn-secondary">Battle</button>
-        <button id="tabsstore" class="btn-secondary">Store</button>
-        <button id="tabseditor" class="btn-secondary">Editor</button>
-        <button id="tabshighscore" class="btn-secondary">Highscore</button>
-      </div>
-      <div id="screen">
-        <div id="battle">
-          <div class="d-flex justify-content-between">
-            <button>Attack</button>
-            <button>Guard</button>
+      <div id="game">
+        <div id="tabs" class="d-flex justify-content-between">
+          <button id="tabsbattle" class="btn-secondary">Battle</button>
+          <button id="tabsstore" class="btn-secondary">Store</button>
+          <button id="tabseditor" class="btn-secondary">Editor</button>
+          <button id="tabslobby" class="btn-secondary">lobby</button>
+          <button id="tabshighscore" class="btn-secondary">Highscore</button>
+        </div>
+        <div id="screen">
+          <div id="battle">
+            <div class="d-flex justify-content-between">
+              <button>Attack</button>
+              <button>Guard</button>
+            </div>
+          </div>
+          <div id="lobby">
+            <div class="d-flex justify-content-center">S E S S I O N  L O B B Y</div>
+            <div id="sessionlist">
+              <button id="queuesubmit">Queue for game 78437324793284</button>
+            </div>
+          </div>
+          <div id="store"></div>
+          <div id="editor">editor</div>
+          <div id="highscore">
+            <div class="d-flex justify-content-center">H I G H S C O R E</div>
           </div>
         </div>
-        <div id="lobby">
-          <div class="d-flex justify-content-center">S E S S I O N  L O B B Y</div>
-          <div id="sessionlist">
-            <button id="queuesubmit">Queue for game 78437324793284</button>
-          </div>
-        </div>
-        <div id="store"></div>
       </div>
     </div>
 
