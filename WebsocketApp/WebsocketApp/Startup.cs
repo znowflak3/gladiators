@@ -24,6 +24,7 @@ using System.Text.Json.Serialization;
 using static GamesVonKoch.DbModels.Gladiator;
 using GladiatorDatabase;
 
+
 namespace WebsocketApp
 {
     public class Startup
@@ -135,8 +136,37 @@ namespace WebsocketApp
                                 case "clientregister":
                                     if (content.Username != null && content.Password != null && content.Email != null)
                                     {
+                                        var userDb = new Usermanager(new EditorContext());
+                                        var users = userDb.ReadAllUser();
+
+
+                                        if (users.Contains(users.Find(x => x.UserName == content.Username)))
+                                        {
+                                            string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(new PID(), "rejected"));
+                                            byte[] buffer = Encoding.UTF8.GetBytes(json);
+                                            await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                                        }
+                                        else 
+                                        {
+                                            userDb.Create(content.Username, content.Password, content.Email);
+                                            client_pid = _kernel.Spawn(null, Actors.ClientProxy());
+
+                                            _kernel.Send(_sessionManager_pid, new Mail(Symbol.AddChild, client_pid));
+
+                                            _kernel.AddWebSocketConnection(client_pid, webSocket);
+                                            _websockets.Add(webSocket);
+                                            string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "clientlogin"));
+                                            byte[] buffer = Encoding.UTF8.GetBytes(json);
+                                            await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                                        }
+
                                         var userManager = new Usermanager(new EditorContext());
                                         userManager.Create(content.Username, content.Password, content.Email);
+                                        //WebSocketClient.SendMessage(webSocket, );
+                                    }
+                                    else 
+                                    {
+
                                     }
                                     break;
                                 case "clientlogin":
@@ -148,7 +178,14 @@ namespace WebsocketApp
 
                                         _kernel.AddWebSocketConnection(client_pid, webSocket);
                                         _websockets.Add(webSocket);
-                                        string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid));
+                                        string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "clientlogin"));
+                                        byte[] buffer = Encoding.UTF8.GetBytes(json);
+                                        await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+
+                                    }
+                                    else 
+                                    {
+                                        string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "rejected"));
                                         byte[] buffer = Encoding.UTF8.GetBytes(json);
                                         await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
                                     }
@@ -162,6 +199,9 @@ namespace WebsocketApp
                                     break;
                                 case "gameaction":
                                     _kernel.Send(_sessionManager_pid, new Mail(Symbol.GameAction, content));
+                                    break;
+                                case "buy":
+                                    ///send to shop manager :)
                                     break;
                                 default:
                                     break;

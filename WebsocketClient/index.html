@@ -1,15 +1,237 @@
 <html>
-	<head>
+  <head>
     <link
         rel="stylesheet"
         href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
         integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
         crossorigin="anonymous">
-	</head>
-	<body>
-		Client preliminary test:
-		<div id="app-root"></div>
-		<div id="log-root"></div>
-		<script src="nu.js"></script>
-	</body>
+<style>
+.vertical-center {
+  min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
+  min-height: 100vh; /* These two lines are counted as one :-)       */
+
+  display: flex;
+  align-items: center;
+}
+
+</style>
+  </head>
+  <body>
+    <script>
+      window.onload = () => {
+        // FUNCTIONS
+        const free = node => {
+          for (let i = 0; i < node.children.length; i++) {
+            const child = node.children[i];
+            node.removeChild(node.children[i]);
+            free(child);
+          }
+        }
+
+        const logroot = document.getElementById("logroot");
+        const display = color => text => {
+          const div = document.createElement("div");
+          div.textContent = text;
+          div.classList.add("d-flex");
+          div.classList.add("justify-content-center");
+          div.classList.add("error-class");
+          div.style.background = color;
+          div.style.color = "#ffffff";
+          logroot.appendChild(div);
+          setTimeout(() => logroot.removeChild(div), 5000);
+        }
+        const displayError = display("#882222");
+        const displaySuccess = display("#228822");
+        // APP
+        let state = {items: [], inqueue: false};
+        let socket = new WebSocket('wss://localhost:44333/ws');
+        socket.onclose = _ => { displayError("lost connection"); }
+        socket.onerror = e => { alert("error", e); }
+
+        // LOGIN
+        const login = document.getElementById("login");
+        const loginname = document.getElementById("loginname");
+        const loginpass = document.getElementById("loginpass");
+        const loginsubmit = document.getElementById("loginsubmit");
+        const loginemail = document.getElementById("loginemail");
+        const loginreg = document.getElementById("loginreg");
+
+        loginname.onkeyup = k => {
+          let valid = /^[a-zA-Z0-9]*$/g;
+          if (valid.test(loginname.value)) loginname.style.color = "#000000";
+          else loginname.style.color = "#ff0000";
+        }
+
+        loginpass.onkeyup = k => {
+          let valid = /^[a-zA-Z0-9]*$/g;
+          if (valid.test(loginpass.value)) loginpass.style.color = "#000000";
+          else loginpass.style.color = "#ff0000";
+        }
+
+        loginsubmit.onclick = _ => {
+          let valid = /^[a-zA-Z0-9]*$/g;
+          let valid0 = /^[a-zA-Z0-9]*$/g;
+          if (valid.test(loginname.value) && valid0.test(loginpass.value)) {
+            const mail = (loginreg.checked) ?
+              JSON.stringify({
+                "Username": loginname.value,
+                "Password": loginpass.value,
+                "Email": loginemail.value
+              }) : JSON.stringify({
+                "Username": loginname.value,
+                "Password": loginpass.value
+              });
+            const type = JSON.stringify({
+              "MailType": (loginreg.checked? "clientregister":"clientlogin")}
+            );
+            const msg = type + mail;
+            console.log(">>>", msg);
+            socket.send(msg);
+          }
+        }
+
+        loginemail.onkeyup = _ => {
+          let valid = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+          if (valid.test(loginemail.value)) loginemail.style.color = "#000000";
+          else loginemail.style.color = "#ff0000";
+        }
+
+        // STORE
+        const store = document.getElementById("store");
+        const addStoreItem = (name, desc, cost) => {
+          const child = document.createElement("div");
+          const button = document.createElement("button");
+          button.innerHTML = name + " :: " + desc + " :: $" + cost;
+          button.classList.add("btn-secondary");
+          button.style.width = "100%";
+          button.onclick = _ => {
+            const type = JSON.stringify({
+              "MailType": "buy"
+            });
+            const mail = JSON.stringify({
+              "Item": name,
+            });
+            socket.send(type + mail);
+          }
+          child.appendChild(button);
+          store.appendChild(child);
+        }
+
+        // BATTLE
+        // SESSION
+        const queuesubmit = document.getElementById("queuesubmit");
+        queuesubmit.onclick = queueGame = () => {
+          if (!state.inqueue) {
+            const type = JSON.stringify({"MailType": "queuegame"});
+            const mail = JSON.stringify({"Pid": state.pid});
+            const msg = type + mail;
+            console.log(">>>", msg);
+            socket.send(msg);
+          }
+        }
+
+        // STATE MACHINE
+        const protocol = {
+          "authorize": 0,
+          "gameaction": 1,
+          "clientlogin": 2,
+          "clientregister": 3,
+          "buy": 4,
+        }
+
+
+        socket.onmessage = msg => {
+          const content = JSON.parse(msg.data);
+          console.log("<<<", msg);
+          console.log("id", content.MailType);
+          switch (content.MailType) {
+            case "clientlogin":
+              if (content.Pid == "rejected") {
+                alert("rejected, try again");
+              } else {
+                console.log("-!-", "connected");
+                state.pid = content.Pid;
+                free(login);
+                login.parentNode.removeChild(login);
+              }
+              return;
+
+            case "buy":
+              if (content.Rejected) {
+                displaySuccess("bought: " + content.Item);
+              } else {
+                displayError("not enough coins");
+                state.items.push(content.Item);
+              }
+              return;
+
+            case "queuegame":
+              state.inqueue = true;
+              displaySuccess("queued");
+              return;
+
+            // TODO: ADD HANDLING OF MAIL TYPES
+            default:
+              console.log(content);
+          }
+        }
+
+        // TEST
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+      }
+    </script>
+
+    <div id="app-root" class="container">
+      <div id="logroot"></div>
+      <div id="login" class="d-flex justify-content-center vertical-center">
+        <div>
+          <div class="d-flex justify-content-center">G L A D I A T O R S</div>
+          <br>
+          <div>Name: <input id="loginname" type="text"></div>
+          <div>Pass: <input id="loginpass" type="text"></div>
+          <div>Mail: <input id="loginemail" type="text"></div>
+          <br>
+          <div class="d-flex justify-content-between">
+            <button id="loginsubmit" class="btn-primary">Submit</button>
+            <div>Register: <input id="loginreg" type="checkbox"></div>
+          </div>
+        </div>
+      </div>
+      <div id="tabs" class="d-flex justify-content-between">
+        <button id="tabsbattle" class="btn-secondary">Battle</button>
+        <button id="tabsstore" class="btn-secondary">Store</button>
+        <button id="tabseditor" class="btn-secondary">Editor</button>
+        <button id="tabshighscore" class="btn-secondary">Highscore</button>
+      </div>
+      <div id="screen">
+        <div id="battle">
+          <div class="d-flex justify-content-between">
+            <button>Attack</button>
+            <button>Guard</button>
+          </div>
+        </div>
+        <div id="lobby">
+          <div class="d-flex justify-content-center">S E S S I O N  L O B B Y</div>
+          <div id="sessionlist">
+            <button id="queuesubmit">Queue for game 78437324793284</button>
+          </div>
+        </div>
+        <div id="store"></div>
+      </div>
+    </div>
+
+  </body>
 </html>

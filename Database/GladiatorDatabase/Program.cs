@@ -200,6 +200,7 @@ namespace GladiatorDatabase
 
         EditorContext DB { get; set; }
 
+
         public void ShopCreate(Shop shop)
         {
             Console.WriteLine("\n*ShopCreate Gladiator*");
@@ -240,6 +241,7 @@ namespace GladiatorDatabase
         
         public void Update(Lanista lanista, Gladiator gladiator, string gladiatorName,
             bool alive, bool win, bool killed)
+
         {
             Console.WriteLine("\n*Update Gladiator*");
 

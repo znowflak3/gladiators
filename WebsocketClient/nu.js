@@ -170,6 +170,10 @@ const element /*: (HTMLElement, string, ElementBehaviour, HTMLElement => void) =
 			case Protocol.ChildKilled:
 				runtime.die();
 				return;
+			case Protocol.HideElement:
+				return;
+			case Protocol.ShowElement:
+				return;
 			case Protocol.Terminate:
 				parent.removeChild(e);
 				return;
@@ -195,20 +199,26 @@ const button = (p, b, s) => element(p, "button", b, s);
 
 // GUI
 
-const DivActor = (parent, ...behaviours) => {
-	let children = [];
-	const wrapper = element(parent, "div", (runtime, self, elem, m) => {
-		switch (m.type) {
-			case Protocol.Initialize:
-				children = behaviours.map(b => init(runtime, "init", b(elem)));
-				return;
-			case Protocol.ParentKilled:
-			case Protocol.Terminate:
-				children.forEach(child => runtime.send(child, mail(Protocol.ParentKilled, "killed")));
-				return;
-		}
-	});
-	return wrapper;
+const free = node => {
+	for (let i = 0; i < node.children.length; i++) {
+		const child = node.children[i];
+		node.removeChild(node.children[i]);
+		free(child);
+	}
+}
+
+const hide = node => {
+	node.display = 'none';
+	for (let i = 0; i < node.children.length; i++) {
+		hide(node.children[i]);
+	}
+}
+
+const show = node => {
+	node.display = 'block';
+	for (let i = 0; i < node.children.length; i++) {
+		hide(node.children[i]);
+	}
 }
 
 const color = {
@@ -227,6 +237,10 @@ const WebSocketActor = to => {
 					runtime.send(to, mail(Protocol.WebSocketOpen, "socket open"));
 				return;
 			case Protocol.WebSocketSend:
+				const keys = m.content.keys();
+				for (let i = 0; i < keys.length; i++) {
+					m.content[keys[i]] = typeof keys[i] === "number"  ? keys[i].ToString() : keys[i];
+				}
 				socket.send(JSON.stringify(m.content));
 				return;
 			case Protocol.Terminate:
@@ -238,10 +252,10 @@ const WebSocketActor = to => {
 }
 
 const LoginActor = (parent, recipient) => {
-	let login = {};
 	const wrapper = element(parent, "div", (runtime, self, parent, m) => {
 		switch (m.type) {
 			case Protocol.Initialize:
+				let login = {};
 				login.namediv = document.createElement("div");
 				login.name = document.createElement("input");
 				login.name.onkeyup = _ => {
@@ -258,7 +272,6 @@ const LoginActor = (parent, recipient) => {
 				login.pass = document.createElement("input");
 				login.pass.onkeyup = _ => {
 					let valid = /^[a-zA-Z0-9]*$/g;
-					console.log("fuck", login.name.value);
 					if (valid.test(login.name.value)) {
 						login.name.style.color = color.text.color;
 					} else {
@@ -275,28 +288,30 @@ const LoginActor = (parent, recipient) => {
 					let m = {};
 					let type = Protocol.ClientLogin;
 					if (login.register.checked) type = Protocol.ClientRegister;
+					let re = new RegExp('/^[a-zA-Z0-9]*$/g');
+					if (!re.test(login.pass.value)) return;
 					m.pass = login.pass.value;
+					let re = new RegExp('/^[a-zA-Z0-9]*$/g');
+					if (!re.test(login.name.value)) return;
 					m.name = login.name.value;
 					runtime.send(recipient, mail(type, m));
 				};
 
 				parent.appendChild(login.namediv);
 				parent.appendChild(login.passdiv);
+				login.namediv.appendChild(document.createTextNode("name"));
+				login.passdiv.appendChild(document.createTextNode("pass"));
 				login.namediv.appendChild(login.name);
 				login.passdiv.appendChild(login.pass);
 				parent.appendChild(login.buttondiv);
+				login.submit.textContent = "submit";
 				login.buttondiv.appendChild(login.submit);
+				login.buttondiv.appendChild(document.createTextNode("register"));
 				login.buttondiv.appendChild(login.register);
 				return;
 
 			case Protocol.Terminate:
-				parent.removeChild(login.namediv);
-				parent.removeChild(login.passdiv);
-				login.namediv.removeChild(login.name);
-				login.passdiv.removeChild(login.pass);
-				parent.removeChild(login.buttondiv);
-				login.buttondiv.removeChild(login.submit);
-				login.buttondiv.removeChild(login.register);
+				free(parent);
 				return;
 		}
 	});
@@ -304,15 +319,52 @@ const LoginActor = (parent, recipient) => {
 	return wrapper;
 }
 
+const StoreItem = (parent, name, cost, description) => {
+	let item = {};
+	const wrapper = element(parent, "div", (runtime, self, parent, m) => {
+		switch (m.type) {
+			case Protocol.Initialize:
+				item.button = document.createElement("button");
+				item.buttondiv = document.createElement("div");
+				item.buttondiv.appendChild(item.button);
+				item.button.textContent = "$" + cost.ToString();
+				parent.appendChild(document.createTextNode(name + ": " + description));
+				parent.appendChild(item.buttondiv);
+				return;
+			case Protocol.Terminate:
+				free(parent)
+				return;
+		}
+	});
+	return wrapper;
+}
+
+const RequestActor = sock => {
+	const wrapper = actor((runtime, self, m) => {
+		switch (m.type) {
+			Protocol.ClientLogin:
+			Protocol.ClientRegister:
+				runtime.send(sock, mail(Protocol.WebSocketSend, m));
+				return;
+			Protocol.Terminate:
+				return;
+		}
+	});
+	return wrapper;
+}
+
 const ListActor = parent => {
 	let actors = {};
+	let divs = [];
 	const wrapper = element(parent, "div", (runtime, self, parent, m) => {
-		console.log("HEREHEHEHEHEHEHEHEHE");
 		switch (m.type) {
 
 			case Protocol.Initialize:
 				for (let i = 0; i < m.content.length; i++) {
-					const item = runtime.spawnLink(m.content[i](parent));
+					const div = document.createElement("div");
+					parent.appendChild(div);
+					divs.push(div);
+					const item = runtime.spawnLink(m.content[i](div));
 					runtime.send(item, mail(Protocol.Initialize, unit));
 					actors[item] = item;
 				}
@@ -328,6 +380,9 @@ const ListActor = parent => {
 				return;
 
 			case Protocol.Terminate:
+				for (let i = 0; i < div.length; i++) {
+					parent.removeChild(divs[i]);
+				}
 				for (let a in actors) {
 					runtime.send(a, mail(Protocol.Terminate, "killed"));
 				}
@@ -337,49 +392,6 @@ const ListActor = parent => {
 	});
 	return wrapper;
 }
-
-const ItemListActor = parent => {
-	let items = [];
-	const wrapper = element(parent, "div", (runtime, self, parent, m) => {
-		switch (m.type) {
-
-			case Protocol.Initialize:
-				for (let i = 0; i < m.content.length; i++) {
-					let item = {};
-					item.div = document.createElement("div");
-					item.name = document.createElement("div");
-					item.buy = document.createElement("div");
-					item.div.appendChild(item.name);
-					item.div.appendChild(item.buy);
-					parent.appendChild(item.div);
-					items.push(item);
-				}
-				return;
-
-			case Protocol.ItemListAdd:
-				let item = {};
-				item.div = document.createElement("div");
-				item.name = document.createElement("div");
-				item.buy = document.createElement("div");
-				div.appendChild(name);
-				div.appendChild(buy);
-				parent.appendChild(div);
-				return;
-
-			case Protocol.Terminate:
-				for (let i = 0; i < items.length; i++) {
-					items[i].div.removeChild(items[i].name);
-					items[i].div.removeChild(items[i].buy);
-					parent.removeChild(items[i].div);
-				}
-				return;
-
-		}
-	});
-	return wrapper;
-}
-
-// ws://demos.kaazing.com/echo
 
 // TEST
 const approot = document.getElementById("app-root");
@@ -393,15 +405,11 @@ const root = kernel.spawn(actor((r, s, m) => {
 		case Protocol.Terminate:
 			break;
 		case Protocol.Initialize:
-			//ws = r.spawn(WebSocketActor(s));
-			//r.send(ws, mail(Protocol.Initialize, "ws://demos.kaazing.com/echo"));
-			//const login = r.spawn(LoginActor(approot, ws));
-			//r.send(login, mail(Protocol.Initialize, unit));
-			const list = r.spawn(ListActor(approot));
-			r.send(list, mail(Protocol.Initialize, [
-				p => LoginActor(p, 0),
-				p => LoginActor(p, 0)
-			]));
+			ws = r.spawn(WebSocketActor(s));
+			r.send(ws, mail(Protocol.Initialize, "ws://localhost:4433/ws"));
+			request = r.spawn(RequestActor(ws));
+			const login = r.spawn(LoginActor(approot, request));
+			r.send(login, mail(Protocol.Initialize, unit));
 			break;
 		case Protocol.WebSocketOpen:
 			//r.send(ws, mail(Protocol.WebSocketSend, "foo"));

@@ -8,6 +8,7 @@ namespace WebsocketApp.JsonModels
 {
     public class GameReturn
     {
+        public string MailType { get; set; }
         public string GOneHealth { get; set; }
         public string GTwoHealth { get; set; }
         //the clients gladiator
