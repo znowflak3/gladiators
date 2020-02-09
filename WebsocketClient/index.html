@@ -26,7 +26,6 @@
             node.removeChild(node.children[i]);
             free(child);
           }
-          node.parentNode.removeChild(node);
         }
 
         const hide = node => {
@@ -254,8 +253,8 @@
               return;
 
             case "items":
-              state.items = content.Items;
-              store.items.forEach(e => addStoreItem(e.Name, e.Description, e.Cost));
+              state.store = content.Items;
+              state.store.forEach(e => addStoreItem(e.Name, e.Description, e.Cost));
               return;
 
             // TODO: ADD HANDLING OF MAIL TYPES
