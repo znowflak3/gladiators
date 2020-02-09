@@ -21,9 +21,9 @@
       window.onload = () => {
         // FUNCTIONS
         const free = node => {
-          for (let i = 0; i < node.childNodes.length; i++) {
-            free(node.childNodes[i]);
-            node.removeChild(node.childNodes[i]);
+          while (node.children[0]) {
+            free(node.childNodes[0]);
+            node.removeChild(node.childNodes[0]);
           }
         }
 
