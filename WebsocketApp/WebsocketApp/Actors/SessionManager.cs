@@ -2,7 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using WebsocketApp.JsonModels;
 
 namespace WebsocketApp
 {
@@ -22,6 +27,25 @@ namespace WebsocketApp
                         if (!playQueue.Contains(key))
                         {
                             playQueue.Enqueue(key);
+                            Response response = new Response()
+                            {
+                                MailType = "queuegame",
+                                MailResponse = "inqueue"
+                            };
+                            string json = JsonSerializer.Serialize(response);
+                            byte[] buffer = Encoding.UTF8.GetBytes(json);
+                            rt.GetWebSocket(key).SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                        }
+                        else if (playQueue.Contains(key))
+                        {
+                            Response response = new Response()
+                            {
+                                MailType = "queuegame",
+                                MailResponse = "allreadyinqueue"
+                            };
+                            string json = JsonSerializer.Serialize(response);
+                            byte[] buffer = Encoding.UTF8.GetBytes(json);
+                            rt.GetWebSocket(key).SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
                         }
                         if (playQueue.Count > 1)
                         {
