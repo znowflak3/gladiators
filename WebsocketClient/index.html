@@ -27,7 +27,7 @@
           }
         }
         // APP
-        let socket = new WebSocket(/*'ws://localhost:4433/ws'*/'wss://demos.kaazing.com/echo');
+        let socket = new WebSocket('wss://localhost:4433/ws');
 
         // LOGIN
         const login = document.getElementById("login");
@@ -91,6 +91,8 @@
           store.appendChild(child);
         }
 
+        // BATTLE
+
         // STATE MACHINE
         const protocol = {
           "authorize": 0,
@@ -147,6 +149,11 @@
         </div>
       </div>
       <div id="store"></div>
+      <div id="battle">
+        <div class="d-flex justify-content-between">
+          <button id="battle"></button>
+        </div>
+      </div>
     </div>
   </body>
 </html>
