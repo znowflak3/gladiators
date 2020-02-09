@@ -34,7 +34,7 @@
           div.textContent = text;
           div.classList.add("d-flex");
           div.classList.add("justify-content-center");
-          div.classList.adD("error-class");
+          div.classList.add("error-class");
           div.style.background = color;
           div.style.color = "#ffffff";
           logroot.appendChild(div);
@@ -43,6 +43,7 @@
         const displayError = display("#882222");
         const displaySuccess = display("#228822");
         // APP
+        let state = {items: [], inqueue: false};
         let socket = new WebSocket('wss://localhost:44333/ws');
         socket.onclose = _ => { displayError("lost connection"); }
         socket.onerror = e => { alert("error", e); }
@@ -118,12 +119,15 @@
 
         // BATTLE
         // SESSION
-        const queueGame = () => {
-          const type = JSON.stringify({"MailType": "queuegame"});
-          const mail = JSON.stringify({"Pid": state.pid});
-          const msg = type + mail;
-          console.log(">>>", msg);
-          socket.send(msg);
+        const queuesubmit = document.getElementById("queuesubmit");
+        queuesubmit.onclick = queueGame = () => {
+          if (!state.inqueue) {
+            const type = JSON.stringify({"MailType": "queuegame"});
+            const mail = JSON.stringify({"Pid": state.pid});
+            const msg = type + mail;
+            console.log(">>>", msg);
+            socket.send(msg);
+          }
         }
 
         // STATE MACHINE
@@ -135,7 +139,6 @@
           "buy": 4,
         }
 
-        let state = {items: [], inqueue: true};
 
         socket.onmessage = msg => {
           const content = JSON.parse(msg.data);
@@ -148,7 +151,8 @@
               } else {
                 console.log("-!-", "connected");
                 state.pid = content.Pid;
-                login.innerHTML = "";
+                free(login);
+                login.parentNode.removeChild(login);
               }
               return;
 
@@ -163,6 +167,7 @@
 
             case "queuegame":
               state.inqueue = true;
+              displaySuccess("queued");
               return;
 
             // TODO: ADD HANDLING OF MAIL TYPES
@@ -172,20 +177,20 @@
         }
 
         // TEST
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
-        addStoreItem("foo", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
+        addStoreItem("gladiator", "bar", 4);
       }
     </script>
 
@@ -220,7 +225,9 @@
         </div>
         <div id="lobby">
           <div class="d-flex justify-content-center">S E S S I O N  L O B B Y</div>
-          <div id="sessionlist"></div>
+          <div id="sessionlist">
+            <button id="queuesubmit">Queue for game 78437324793284</button>
+          </div>
         </div>
         <div id="store"></div>
       </div>
