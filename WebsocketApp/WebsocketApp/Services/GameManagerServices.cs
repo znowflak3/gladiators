@@ -19,6 +19,7 @@ namespace WebsocketApp.Services
         {
             var result = new GameReturn()
             {
+                MailType = "gamereturn",
                 GOneHealth = gladiator.Health.ToString(),
                 GTwoHealth = gladiator.Health.ToString(),
                 //Turn = "gladiatorOne",
@@ -37,6 +38,7 @@ namespace WebsocketApp.Services
         {
             var result = new GameStart()
             {
+                MailType = "gamestart",
                 PlayerName = player.Name,
                 PlayerHealth = player.Health.ToString(),
                 PlayerSkills = new List<string>(),

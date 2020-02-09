@@ -197,7 +197,7 @@ public class Gladiatormanager
     }
 
     EditorContext DB { get; set; }
-        
+       /* 
     public void Create(Shop shop)
     {
         Console.WriteLine("\n*Create Gladiator*");
@@ -205,7 +205,7 @@ public class Gladiatormanager
         var Gladiator = new Gladiator { ShopId = owner };
         DB.Lanistas.Add(Lanista);
         DB.SaveChanges();
-    }
+    }*/
     public void Read()
     {
         /*todo change all *manger read*/

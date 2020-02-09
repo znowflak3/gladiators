@@ -9,6 +9,7 @@ namespace WebsocketApp.JsonModels
 {
     public class GameStart
     {
+        public string MailType { get; set; }
         public string PlayerName { get; set; }
         public string PlayerHealth { get; set; }
         public List<string> PlayerSkills { get; set; }

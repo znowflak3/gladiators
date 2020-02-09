@@ -137,6 +137,7 @@ namespace WebsocketApp
                                     {
                                         var userManager = new Usermanager(new EditorContext());
                                         userManager.Create(content.Username, content.Password, content.Email);
+
                                     }
                                     break;
                                 case "clientlogin":
@@ -148,7 +149,14 @@ namespace WebsocketApp
 
                                         _kernel.AddWebSocketConnection(client_pid, webSocket);
                                         _websockets.Add(webSocket);
-                                        string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid));
+                                        string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "clientlogin"));
+                                        byte[] buffer = Encoding.UTF8.GetBytes(json);
+                                        await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+
+                                    }
+                                    else 
+                                    {
+                                        string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "rejected"));
                                         byte[] buffer = Encoding.UTF8.GetBytes(json);
                                         await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
                                     }
@@ -162,6 +170,9 @@ namespace WebsocketApp
                                     break;
                                 case "gameaction":
                                     _kernel.Send(_sessionManager_pid, new Mail(Symbol.GameAction, content));
+                                    break;
+                                case "buy":
+                                    ///send to shop manager :)
                                     break;
                                 default:
                                     break;
