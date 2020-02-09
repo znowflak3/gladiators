@@ -14,14 +14,6 @@
   align-items: center;
 }
 
-.success-color {
-  background: "#228822";
-  color: "#ffffff";
-}
-.error-color {
-  background: "#882222";
-  color: "#ffffff";
-}
 </style>
   </head>
   <body>
@@ -35,9 +27,24 @@
             free(child);
           }
         }
+
+        const logroot = document.getElementById("logroot");
+        const display = color => text => {
+          const div = document.createElement("div");
+          div.textContent = text;
+          div.classList.add("d-flex");
+          div.classList.add("justify-content-center");
+          div.classList.adD("error-class");
+          div.style.background = color;
+          div.style.color = "#ffffff";
+          logroot.appendChild(div);
+          setTimeout(() => logroot.removeChild(div), 5000);
+        }
+        const displayError = display("#882222");
+        const displaySuccess = display("#228822");
         // APP
         let socket = new WebSocket('wss://localhost:44333/ws');
-        socket.onclose = _ => { alert("lost connection"); }
+        socket.onclose = _ => { displayError("lost connection"); }
         socket.onerror = e => { alert("error", e); }
 
         // LOGIN
@@ -110,6 +117,14 @@
         }
 
         // BATTLE
+        // SESSION
+        const queueGame = () => {
+          const type = JSON.stringify({"MailType": "queuegame"});
+          const mail = JSON.stringify({"Pid": state.pid});
+          const msg = type + mail;
+          console.log(">>>", msg);
+          socket.send(msg);
+        }
 
         // STATE MACHINE
         const protocol = {
@@ -120,7 +135,7 @@
           "buy": 4,
         }
 
-        let state = {items: []};
+        let state = {items: [], inqueue = true};
 
         socket.onmessage = msg => {
           console.log("<<<", msg);
@@ -131,27 +146,21 @@
               } else {
                 console.log("-!-", "connected");
                 state.pid = content.Pid;
-                free(login);
-              }
-              return;
-
-            case protocol.clientregister:
-              if (content.Pid == "register") {
-                alert("rejected, try another name");
-              } else {
-                console.log("-!-", "connected");
-                state.pid = content.Pid;
-                free(login);
+                login.innerHTML = "";
               }
               return;
 
             case protocol.buy:
               if (content.Rejected) {
-                // TODO: ADD DIALOG
+                displaySuccess("bought: " + content.Item);
               } else {
-                // TODO: ADD BOUGHT
+                displayError("not enough coins");
                 state.items.push(content.Item);
               }
+              return;
+
+            case protocol.queuegame:
+              state.inqueue = true;
               return;
 
             // TODO: ADD HANDLING OF MAIL TYPES
@@ -179,6 +188,7 @@
     </script>
 
     <div id="app-root" class="container">
+      <div id="logroot"></div>
       <div id="login" class="d-flex justify-content-center vertical-center">
         <div>
           <div class="d-flex justify-content-center">G L A D I A T O R S</div>
