@@ -136,7 +136,8 @@
           store.appendChild(child);
         }
 
-        const storetab = _ => {
+        const tabsstore = document.getElementById("tabsstore");
+        tabsstore.onclick = _ => {
           const type = JSON.stringify({"MailType": "items"});
           const mail = JSON.stringify({"PId": state.pid});
           const msg = type + mail;
