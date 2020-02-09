@@ -22,11 +22,10 @@
         // FUNCTIONS
         const free = node => {
           console.log("freeing", node.children.length);
-          for (let i = 0; i < node.children.length; i++) {
-            const child = node.children[i];
-            node.removeChild(node.children[i]);
+          node.children.forEach(child => {
+            child.parentNode.removeChild(child);
             free(child);
-          }
+          });
         }
 
         const hide = node => {
