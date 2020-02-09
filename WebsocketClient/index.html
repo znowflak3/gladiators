@@ -229,6 +229,11 @@
                 console.log("-!-", "connected");
                 state.pid = content.PId;
                 show(screen);
+                hide(store);
+                hide(lobby);
+                hide(battle);
+                hide(highscore);
+
                 free(login);
                 login.parentNode.removeChild(login);
               }
