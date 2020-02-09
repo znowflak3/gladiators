@@ -34,6 +34,7 @@ namespace WebsocketApp
 
         private PID _sessionManager_pid;
         private PID _echo_pid;
+        private PID _shop_pid;
         public Startup(IConfiguration configuration)
         {
             Console.WriteLine("dfgdfhd");
@@ -45,9 +46,12 @@ namespace WebsocketApp
                 var sessionManager_pid = rt.SpawnLink(login_pid, Actors.SessionManager());
                 var log_pid = rt.SpawnLink(login_pid, Actors.Log());
                 var echo_pid = rt.Spawn(null, Actors.Echo());
+                var shop_pid = rt.Spawn(null, Actors.Buy());
 
                 _sessionManager_pid = sessionManager_pid;
                 _echo_pid = echo_pid;
+                _shop_pid = shop_pid;
+                
           
                 return null;
             });
@@ -200,9 +204,13 @@ namespace WebsocketApp
                                 case "gameaction":
                                     _kernel.Send(_sessionManager_pid, new Mail(Symbol.GameAction, content));
                                     break;
+                                case "items":
+                                    _kernel.Send(_shop_pid, new Mail(Symbol.Items, content));
+                                    break;
                                 case "buy":
                                     ///send to shop manager :)
-                                    break;
+                                    _kernel.Send(_shop_pid, new Mail(Symbol.Buy, content));
+                                    break;                        
                                 default:
                                     break;
                             }

@@ -13,6 +13,7 @@ namespace GladiatorDatabase
         {
             using (var db = new EditorContext())
             {
+                
                 Console.WriteLine("Temp Switch Meny");
                 Console.WriteLine("1: User. 2: Lanistas. 3: Gladiator. 4: Items. 5: BattleResult. 6: GladiatorKills. ");
                 var c = Console.ReadKey();
