@@ -5,11 +5,148 @@
         href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
         integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
         crossorigin="anonymous">
-	</head>
-	<body>
-		Client preliminary test:
-		<div id="app-root"></div>
-		<div id="log-root"></div>
-		<script src="nu.js"></script>
-	</body>
+<style>
+.vertical-center {
+  min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
+  min-height: 100vh; /* These two lines are counted as one :-)       */
+
+  display: flex;
+  align-items: center;
+}
+</style>
+  </head>
+  <body>
+    <script>
+      window.onload = () => {
+        // FUNCTIONS
+        const free = node => {
+          for (let i = 0; i < node.children.length; i++) {
+            const child = node.children[i];
+            node.removeChild(node.children[i]);
+            free(child);
+          }
+        }
+        // APP
+        let socket = new WebSocket(/*'ws://localhost:4433/ws'*/'wss://demos.kaazing.com/echo');
+
+        // LOGIN
+        const login = document.getElementById("login");
+        const loginname = document.getElementById("loginname");
+        const loginpass = document.getElementById("loginpass");
+        const loginsubmit = document.getElementById("loginsubmit");
+        const loginemail = document.getElementById("loginemail");
+        const loginreg = document.getElementById("loginreg");
+
+        loginname.onkeyup = k => {
+          let valid = /^[a-zA-Z0-9]*$/g;
+          if (valid.test(loginname.value)) loginname.style.color = "#000000";
+          else loginname.style.color = "#ff0000";
+        }
+
+        loginpass.onkeyup = k => {
+          let valid = /^[a-zA-Z0-9]*$/g;
+          if (valid.test(loginpass.value)) loginpass.style.color = "#000000";
+          else loginpass.style.color = "#ff0000";
+        }
+
+        loginsubmit.onclick = _ => {
+          let valid = /^[a-zA-Z0-9]*$/g;
+          if (valid.test(loginname.value) && valid.test(loginpass.value)) {
+            const mail = JSON.stringify({
+              "Username": loginname.value,
+              "Password": loginpass.value
+            });
+            const type = JSON.stringify({
+              "MailType": (loginreg.checked? "clientregister":"clientlogin")}
+            );
+            if (loginreg.checked) mail["Email"] = loginemail.value;
+            ws.send(type + mail);
+          }
+        }
+
+        loginemail.onkeyup = _ => {
+          let valid = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+          if (valid.test(loginemail.value)) loginemail.style.color = "#000000";
+          else loginemail.style.color = "#ff0000";
+        }
+
+        // STORE
+        const store = document.getElementById("store");
+        const addStoreItem = (name, desc, cost) => {
+          const child = document.createElement("div");
+          const button = document.createElement("button");
+          button.innerHTML = name + " :: " + desc + " :: $" + cost;
+          button.classList.add("btn-secondary");
+          button.style.width = "100%";
+          button.onclick = _ => {
+            const type = JSON.stringify({
+              "MailType": "buy"
+            });
+            const mail = JSON.stringify({
+              "Item": name,
+            });
+            socket.send(type + mail);
+          }
+          child.appendChild(button);
+          store.appendChild(child);
+        }
+
+        // STATE MACHINE
+        const protocol = {
+          "authorize": 0,
+          "gameaction": 1,
+          "clientlogin": 2,
+          "clientregister": 3,
+          "buy": 4,
+        }
+
+        let state = {};
+
+        socket.onmessage = msg => {
+          const content = JSON.parse(msg.data);
+          switch (protocol[content.MailType]) {
+            case protocol.clientlogin:
+              return;
+            case protocol.buy:
+              // TODO
+              return;
+            // TODO: ADD HANDLING OF MAIL TYPES
+          }
+        }
+
+        // TEST
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+        addStoreItem("foo", "bar", 4);
+      }
+    </script>
+    <div id="app-root" class="container">
+      <div id="login" class="d-flex justify-content-center vertical-center">
+        <div>
+          <div class="d-flex justify-content-center">G L A D I A T O R S</div>
+          <br>
+          <div>Name: <input id="loginname" type="text"></div>
+          <div>Pass: <input id="loginpass" type="text"></div>
+          <div>Mail: <input id="loginemail" type="text"></div>
+          <br>
+          <div class="d-flex justify-content-between">
+            <button id="loginsubmit" class="btn-primary" onclick="">Submit</button>
+            <div>Register: <input type="checkbox" name="reg"></div>
+          </div>
+        </div>
+      </div>
+      <div id="store"></div>
+    </div>
+  </body>
 </html>
