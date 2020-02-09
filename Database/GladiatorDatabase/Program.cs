@@ -92,20 +92,14 @@ public class Usermanager
     public List<User> ReadAllUser()
     {   
         Console.WriteLine("\n*Read AllUser*");
-        var SortUsers = DB.Users.OrderBy(s => s.UserName).
+        var SortUsers = DB.Users.OrderBy(s => s.UserName).ToList<User>();
         return SortUsers;
-        var check = SortUsers.Count<User>();
-        if (check > 0)
-        {
-            foreach (var item in SortUsers)
-            {
-                Console.WriteLine("User: {0} UserId: {1}", item.UserName, item.UserId);
-            }
-        }
-        else
-        {
-            Console.WriteLine("No Users!");
-        }
+    }
+    public User Read(string userName) 
+    {
+        Console.WriteLine("\n*Read User*");
+        var user = DB.Users.Single<User>(s => s.UserName == userName);
+        return user;
     }
     public void Update(User user, string userName, string password, string email, bool admin)
     {
@@ -156,23 +150,16 @@ public class Lanistamanager
         DB.Lanistas.Add(Lanista);
         DB.SaveChanges();
     }
-    public void Read()
+    public List<Lanista> ReadAll(int userId)
     {
-        /*todo change all *manger read*/
-        Console.WriteLine("\n*Read Lanista*");
-        var SortUsers = DB.Users.OrderBy(s => s.UserName);
-        var check = SortUsers.Count<User>();
-        if (check > 0)
-        {
-            foreach (var item in SortUsers)
-            {
-                Console.WriteLine("Lanista: {0} LanistaId: {1}", item.UserName, item.UserId);
-            }
-        }
-        else
-        {
-            Console.WriteLine("No Users!");
-        }
+        Console.WriteLine("\n*Read AllLanista*");
+        var SortLanistas = DB.Lanistas.Where(s => s.UserId == userId).OrderBy(s => s.LanistaName).ToList<Lanista>();
+        return SortLanistas;
+    }
+    public Lanista Read(string lanistaName, int userId)
+    {
+            var lanista = DB.Lanistas.OrderBy(s => s.UserId).Where(s => s.UserId == userId).Single<Lanista>(s => s.LanistaName == lanistaName);
+            return lanista;
     }
     public void Update(Lanista lanista, string lanistaName, Gladiator gladiator)
     {
