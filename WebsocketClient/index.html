@@ -26,6 +26,25 @@
             node.removeChild(node.children[i]);
             free(child);
           }
+          node.parentNode.removeChild(node);
+        }
+
+        const hide = node => {
+          for (let i = 0; i < node.children.length; i++) {
+            const child = node.children[i];
+            node.children[i].classList.add("d-none");
+            hide(child);
+          }
+          node.classList.add("d-none");
+        }
+
+        const show = node => {
+          for (let i = 0; i < node.children.length; i++) {
+            const child = node.children[i];
+            node.children[i].classList.remove("d-none");
+            show(child);
+          }
+          node.classList.remove("d-none");
         }
 
         const logroot = document.getElementById("logroot");
@@ -43,7 +62,7 @@
         const displayError = display("#882222");
         const displaySuccess = display("#228822");
         // APP
-        let state = {items: [], inqueue: false};
+        let state = {items: [], inqueue: false, store: []};
         let socket = new WebSocket('wss://localhost:44333/ws');
         socket.onclose = _ => { displayError("lost connection"); }
         socket.onerror = e => { alert("error", e); }
@@ -117,13 +136,25 @@
           store.appendChild(child);
         }
 
+        const storetab = _ => {
+          const type = JSON.stringify({"MailType": "items"});
+          const mail = JSON.stringify({"PId": state.pid});
+          const msg = type + mail;
+          console.log(">>>", msg);
+          socket.send(msg);
+        }
+
         // BATTLE
+        const gameAction = action => {
+          ;
+        }
+
         // SESSION
         const queuesubmit = document.getElementById("queuesubmit");
         queuesubmit.onclick = queueGame = () => {
           if (!state.inqueue) {
             const type = JSON.stringify({"MailType": "queuegame"});
-            const mail = JSON.stringify({"Pid": state.pid});
+            const mail = JSON.stringify({"PId": state.pid});
             const msg = type + mail;
             console.log(">>>", msg);
             socket.send(msg);
@@ -146,11 +177,11 @@
           console.log("id", content.MailType);
           switch (content.MailType) {
             case "clientlogin":
-              if (content.Pid == "rejected") {
+              if (content.PId == "rejected") {
                 alert("rejected, try again");
               } else {
                 console.log("-!-", "connected");
-                state.pid = content.Pid;
+                state.pid = content.PId;
                 free(login);
                 login.parentNode.removeChild(login);
               }
@@ -170,6 +201,11 @@
               displaySuccess("queued");
               return;
 
+            case "items":
+              state.items = content.Items;
+              store.items.forEach(e => addStoreItem(e.Name, e.Description, e.Cost));
+              return;
+
             // TODO: ADD HANDLING OF MAIL TYPES
             default:
               console.log(content);
@@ -177,19 +213,6 @@
         }
 
         // TEST
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
         addStoreItem("gladiator", "bar", 4);
       }
     </script>
