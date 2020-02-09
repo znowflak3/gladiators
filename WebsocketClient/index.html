@@ -137,10 +137,11 @@
 
         let state = {items: [], inqueue: true};
 
-        socket.onmessage = msg => {
+        socket.onmessage = m => {
+          const msg = m.data;
           console.log("<<<", msg);
-          console.log("id", protocol[content.MailType]);
-          switch (protocol[content.MailType]) {
+          console.log("id", protocol[content["MailType"]);
+          switch (protocol[content["MailType"]]) {
             case protocol.clientlogin:
               if (content.Pid == "rejected") {
                 alert("rejected, try again");
