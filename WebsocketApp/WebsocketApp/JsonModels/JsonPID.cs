@@ -8,10 +8,10 @@ namespace WebsocketApp.JsonModels
 {
     public class JsonPID
     { 
-        public string pId { get; set; }
+        public string PId { get; set; }
         public JsonPID(PID id) 
         {
-            pId = id.ToString();
+            PId = id.ToString();
         }
         public JsonPID()
         { }

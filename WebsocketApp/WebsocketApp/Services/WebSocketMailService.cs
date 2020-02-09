@@ -22,10 +22,18 @@ namespace WebsocketApp.Services
             dynamic result = null;
             switch (_type)
             {
-                case "createuser":
-
-                    break;
-                case "authorize":
+                case "clientregister":
+                    try
+                    {
+                        Register register = JsonSerializer.Deserialize<Register>(_content);
+                        result = register;
+                    }
+                    catch(JsonException ex)
+                    {
+                        result = ex.Message;
+                    }
+                        break;
+                case "clientlogin":
                     try
                     {
                         Login login = JsonSerializer.Deserialize<Login>(_content);

@@ -22,6 +22,7 @@ using WebsocketApp.JsonModels;
 using WebsocketApp.Services;
 using System.Text.Json.Serialization;
 using static GamesVonKoch.DbModels.Gladiator;
+using GladiatorDatabase;
 
 namespace WebsocketApp
 {
@@ -60,6 +61,7 @@ namespace WebsocketApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            
             services.AddControllers();
         }
 
@@ -130,8 +132,14 @@ namespace WebsocketApp
                             }
                             switch (mType.MailType)
                             {
-
-                                case "authorize":
+                                case "clientregister":
+                                    if (content.Username != null && content.Password != null && content.Email != null)
+                                    {
+                                        var userManager = new Usermanager(new EditorContext());
+                                        userManager.Create(content.Username, content.Password, content.Email);
+                                    }
+                                    break;
+                                case "clientlogin":
                                     if (content.Username == "user" && content.Password == "pass")
                                     {
                                         client_pid = _kernel.Spawn(null, Actors.ClientProxy());

@@ -26,7 +26,7 @@ namespace WebsocketApp
                 switch (msg.mtype)
                 {
                     case Symbol.QueueGame:
-                        PID key = new PID(long.Parse(msg.content.pId));
+                        PID key = new PID(long.Parse(msg.content.PId));
                         if (!playQueue.Contains(key))
                         {
                             playQueue.Enqueue(key);
