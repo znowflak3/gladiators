@@ -228,8 +228,8 @@
               } else {
                 console.log("-!-", "connected");
                 state.pid = content.PId;
-                free(login);
                 show(screen);
+                free(login);
                 login.parentNode.removeChild(login);
               }
               return;
@@ -263,7 +263,6 @@
         hide(lobby);
         hide(battle);
         hide(highscore);
-        hide(screen);
 
         // TEST
       }
