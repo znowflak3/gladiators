@@ -137,8 +137,8 @@
 
         let state = {items: [], inqueue: true};
 
-        socket.onmessage = m => {
-          const msg = m.data;
+        socket.onmessage = msg => {
+          const content = m.data;
           console.log("<<<", msg);
           console.log("id", protocol[content["MailType"]]);
           switch (protocol[content["MailType"]]) {
