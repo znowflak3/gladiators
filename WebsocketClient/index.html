@@ -64,18 +64,15 @@
           let valid = /^[a-zA-Z0-9]*$/g;
           let valid0 = /^[a-zA-Z0-9]*$/g;
           if (valid.test(loginname.value) && valid0.test(loginpass.value)) {
-            if (loginreg.checked) {
-              const mail = JSON.stringify({
+            const mail = (loginreg.checked) ?
+              JSON.stringify({
                 "Username": loginname.value,
                 "Password": loginpass.value,
                 "Email": loginemail.value
-              });
-            } else {
-              const mail = JSON.stringify({
+              }) : JSON.stringify({
                 "Username": loginname.value,
                 "Password": loginpass.value
               });
-            }
             const type = JSON.stringify({
               "MailType": (loginreg.checked? "clientregister":"clientlogin")}
             );
