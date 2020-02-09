@@ -197,7 +197,7 @@ public class Gladiatormanager
     }
 
     EditorContext DB { get; set; }
-
+        
     public void Create(Shop shop)
     {
         Console.WriteLine("\n*Create Gladiator*");

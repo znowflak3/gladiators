@@ -1,9 +1,17 @@
 {
-	"MailType"://Symbol
+	"MailType":"clientlogin"
 }
 {
 	"Username":"user",
 	"Password":"pass"
+}
+{
+	"MailType":"clientregister"
+}
+{
+	"Username":"user",
+	"Password":"pass",
+	"Email":"test@test.com"
 }
 //
 {"MailType":"echo"}
@@ -16,7 +24,7 @@
 	"MailType":"queuegame"
 }
 {
-	"pId":"value"	
+	"PId":"value"	
 }
 //gameAttack
 {
