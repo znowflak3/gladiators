@@ -140,9 +140,9 @@
         socket.onmessage = msg => {
           const content = msg.data;
           console.log("<<<", msg);
-          console.log("id", protocol[content["MailType"]]);
-          switch (protocol[content["MailType"]]) {
-            case protocol.clientlogin:
+          console.log("id", content.MailType);
+          switch (content.MailType) {
+            case "clientlogin":
               if (content.Pid == "rejected") {
                 alert("rejected, try again");
               } else {
@@ -152,7 +152,7 @@
               }
               return;
 
-            case protocol.buy:
+            case "buy":
               if (content.Rejected) {
                 displaySuccess("bought: " + content.Item);
               } else {
@@ -161,7 +161,7 @@
               }
               return;
 
-            case protocol.queuegame:
+            case "queuegame":
               state.inqueue = true;
               return;
 
