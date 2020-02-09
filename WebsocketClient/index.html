@@ -138,7 +138,7 @@
         let state = {items: [], inqueue: true};
 
         socket.onmessage = msg => {
-          const content = msg.data;
+          const content = JSON.parse(msg.data);
           console.log("<<<", msg);
           console.log("id", content.MailType);
           switch (content.MailType) {
