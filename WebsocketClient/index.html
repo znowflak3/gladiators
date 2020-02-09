@@ -123,6 +123,7 @@
         // STORE
         const store = document.getElementById("store");
         const addStoreItem = (name, desc, cost) => {
+          free(store);
           const child = document.createElement("div");
           const button = document.createElement("button");
           button.innerHTML = name + " :: " + desc + " :: $" + cost;
