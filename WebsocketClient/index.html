@@ -14,6 +14,11 @@
   align-items: center;
 }
 
+body {
+  background: url("res/gladiators.png");
+background-size: 100%;
+}
+
 </style>
   </head>
   <body>
@@ -21,11 +26,30 @@
       window.onload = () => {
         // FUNCTIONS
         const free = node => {
+          for (let i = node.children.length; i--; ) {
+            if (node.children[0] !== undefined) {
+              free(node.children[0]);
+              node.children[0].remove();
+            }
+          }
+        }
+
+        const hide = node => {
           for (let i = 0; i < node.children.length; i++) {
             const child = node.children[i];
-            node.removeChild(node.children[i]);
-            free(child);
+            node.children[i].classList.add("d-none");
+            hide(child);
           }
+          node.classList.add("d-none");
+        }
+
+        const show = node => {
+          for (let i = 0; i < node.children.length; i++) {
+            const child = node.children[i];
+            node.children[i].classList.remove("d-none");
+            show(child);
+          }
+          node.classList.remove("d-none");
         }
 
         const logroot = document.getElementById("logroot");
@@ -43,7 +67,40 @@
         const displayError = display("#882222");
         const displaySuccess = display("#228822");
         // APP
-        let state = {items: [], inqueue: false};
+
+        // EDITOR has to be defined here to be the default screen
+
+        const editor = document.getElementById("editor");
+        const addEditorEntry = username => {
+          const span = document.createElement("span");
+          span.textContent = username;
+          const btn = document.createElement("button");
+          btn.textContent = "DELETE";
+          btn.style.background = "#882222";
+          const div = document.createElement("div");
+          div.appendChild(span);
+          div.appendChild(btn);
+          btn.onclick = _ => {
+            const type = JSON.stringify({"MailType": "deleteuser"});
+            const mail = JSON.stringify({"PId": state.pid, "User": username});
+            const msg = type + msg;
+            console.log(">>>", msg);
+            socket.send(msg);
+            free(div);
+            div.parentNode.removeChild(div);
+          }
+          admin.appendChild(div);
+        }
+
+
+        let state = {
+          items: [],
+          inqueue: false,
+          store: [],
+          last: editor,
+          turncount: 0,
+          battle: false,
+        };
         let socket = new WebSocket('wss://localhost:44333/ws');
         socket.onclose = _ => { displayError("lost connection"); }
         socket.onerror = e => { alert("error", e); }
@@ -118,16 +175,115 @@
         }
 
         // BATTLE
+        const battle = document.getElementById("battle");
+        const battleguard = document.getElementById("battleguard");
+        const battleattack = document.getElementById("battleattack");
+        battleattack.onclick = _ => {
+          const type = JSON.stringify({"MailType": "gameaction"});
+          const mail = JSON.stringify({
+            "PId": state.pid,
+            "Action": "attack",
+            "Target": "jesus",
+            "Turn": state.turncount,
+          });
+          const msg = type + mail;
+          console.log(">>>", msg);
+          socket.send(msg);
+        }
+
+        // HIGHSCORE
+
+        const highscore = document.getElementById("highscore");
+
         // SESSION
+        const lobby = document.getElementById("lobby");
         const queuesubmit = document.getElementById("queuesubmit");
         queuesubmit.onclick = queueGame = () => {
           if (!state.inqueue) {
             const type = JSON.stringify({"MailType": "queuegame"});
-            const mail = JSON.stringify({"Pid": state.pid});
+            const mail = JSON.stringify({"PId": state.pid});
             const msg = type + mail;
             console.log(">>>", msg);
             socket.send(msg);
           }
+        }
+
+        const tabseditor = document.getElementById("tabseditor");
+        tabseditor.onclick = _ => {
+          hide(state.last);
+          show(editor);
+          state.last = editor;
+        }
+
+        const tabsbattle = document.getElementById("tabsbattle");
+        tabsbattle.onclick = _ => {
+          hide(state.last);
+          show(battle);
+          state.last = battle;
+        }
+
+        const tabshighscore = document.getElementById("tabshighscore");
+        tabshighscore.onclick = _ => {
+          hide(state.last);
+          show(highscore);
+          state.last = highscore;
+        }
+
+        const tabslobby = document.getElementById("tabslobby");
+        tabslobby.onclick = _ => {
+          hide(state.last);
+          show(lobby);
+          state.last = lobby;
+        }
+
+        const tabsadmin = document.getElementById("tabsadmin");
+        tabsadmin.onclick = _ => {
+          hide(state.last);
+          show(admin);
+          state.last = admin;
+          free(admin);
+          const type = JSON.stringify({"MailType": "adminlist"});
+          const mail = JSON.stringify({"PId": state.pid});
+          const msg = type + mail;
+          console.log(">>>", msg);
+          socket.send(msg);
+        }
+
+        const tabsstore = document.getElementById("tabsstore");
+        tabsstore.onclick = _ => {
+          hide(state.last);
+          show(store);
+          state.last = store;
+          const type = JSON.stringify({"MailType": "items"});
+          const mail = JSON.stringify({"PId": state.pid});
+          const msg = type + mail;
+          console.log(">>>", msg);
+          socket.send(msg);
+        }
+
+        const screen = document.getElementById("game");
+
+        const renderBattle = () => {
+          free(battledisplay);
+          let health = document.createElement("div");
+          health.textContent = state.health;
+          let skills = document.createElement("div");
+          skills.textContent = state.skills;
+          let enemyname = document.createElement("div");
+          enemyname.textContent = state.enemyname;
+          let enemyhealth = document.createElement("div");
+          enemyhealth.textContent = state.enemyhealth;
+          let playername = document.createElement("div");
+          playername.textContent = state.playername;
+          let buffs = document.createElement("div");
+          buffs.textContent = state.buffs;
+
+          battledisplay.appendChild(playername);
+          battledisplay.appendChild(health);
+          battledisplay.appendChild(skills);
+          battledisplay.appendChild(buffs);
+          battledisplay.appendChild(enemyname);
+          battledisplay.appendChild(enemyhealth);
         }
 
         // STATE MACHINE
@@ -139,20 +295,59 @@
           "buy": 4,
         }
 
-
         socket.onmessage = msg => {
           const content = JSON.parse(msg.data);
           console.log("<<<", msg);
           console.log("id", content.MailType);
           switch (content.MailType) {
             case "clientlogin":
-              if (content.Pid == "rejected") {
+              if (content.PId == "rejected") {
                 alert("rejected, try again");
               } else {
                 console.log("-!-", "connected");
-                state.pid = content.Pid;
+                state.pid = content.PId;
+                show(screen);
+                hide(store);
+                hide(lobby);
+                hide(battle);
+                hide(highscore);
+                hide(admin);
+
                 free(login);
                 login.parentNode.removeChild(login);
+              }
+              return;
+
+            case "gamestart":
+              displaySuccess("game found");
+              state.battle = true;
+              state.turncount = content.Turn;
+              state.health = content.PlayerHealth;
+              state.skills = content.PlayerSkills;
+              state.enemyname = content.EnemyName;
+              state.enemyhealth = content.EnemyHealth;
+              state.playername = content.PlayerName;
+              state.buffs = [];
+              renderBattle();
+              return;
+
+            case "gamereturn":
+              if (content.Turn == state.pid) {
+                if (content.Winner !== "None") {
+                  state.battle = false;
+                  free(battledisplay);
+                  if (content.Turn !== state.pid) {
+                    displaySuccess("you win");
+                  } else {
+                    displayError("you lose");
+                  }
+                } else {
+                  renderBattle();
+                  state.health = content.GOneHealth;
+                  state.enemyhealth = content.GTwoHealth;
+                  state.buffs = content.Buffs;
+                  state.turncount = content.TurnCount;
+                }
               }
               return;
 
@@ -170,66 +365,84 @@
               displaySuccess("queued");
               return;
 
+            case "items":
+              free(store);
+              state.store = content.Items;
+              state.store.forEach(e => addStoreItem(e.Name, e.Description, e.Cost));
+              return;
+
+            case "adminlist":
+              free(admin);
+              content.Users.forEach(item => addEditorEntry(item));
+              return;
+
             // TODO: ADD HANDLING OF MAIL TYPES
             default:
               console.log(content);
           }
         }
 
+        hide(store);
+        hide(lobby);
+        hide(battle);
+        hide(highscore);
+        hide(admin);
+
         // TEST
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
-        addStoreItem("gladiator", "bar", 4);
       }
     </script>
 
     <div id="app-root" class="container">
+      <div>
+        Extra error checking can be bought as DLC.
+        Click <a href="http://starwarsgamingnews.com/2017/11/it-will-take-4528-hours-of-gameplay-or-2100-to-unlock-all-base-game-content.html">here</a> to purchase!
+      </div>
       <div id="logroot"></div>
       <div id="login" class="d-flex justify-content-center vertical-center">
         <div>
-          <div class="d-flex justify-content-center">G L A D I A T O R S</div>
+          <div class="d-flex justify-content-center text-light">G L A D I A T O R S</div>
           <br>
-          <div>Name: <input id="loginname" type="text"></div>
-          <div>Pass: <input id="loginpass" type="text"></div>
-          <div>Mail: <input id="loginemail" type="text"></div>
+          <div class="text-light">Name: <input id="loginname" type="text"></div>
+          <div class="text-light">Pass: <input id="loginpass" type="text"></div>
+          <div class="text-light">Mail: <input id="loginemail" type="text"></div>
           <br>
           <div class="d-flex justify-content-between">
             <button id="loginsubmit" class="btn-primary">Submit</button>
-            <div>Register: <input id="loginreg" type="checkbox"></div>
+            <div class="text-light">Register: <input id="loginreg" type="checkbox"></div>
           </div>
         </div>
       </div>
-      <div id="tabs" class="d-flex justify-content-between">
-        <button id="tabsbattle" class="btn-secondary">Battle</button>
-        <button id="tabsstore" class="btn-secondary">Store</button>
-        <button id="tabseditor" class="btn-secondary">Editor</button>
-        <button id="tabshighscore" class="btn-secondary">Highscore</button>
-      </div>
-      <div id="screen">
-        <div id="battle">
-          <div class="d-flex justify-content-between">
-            <button>Attack</button>
-            <button>Guard</button>
+      <div id="game">
+        <div id="tabs" class="d-flex justify-content-between">
+          <button id="tabsbattle" class="btn-secondary">Battle</button>
+          <button id="tabsstore" class="btn-secondary">Store</button>
+          <button id="tabseditor" class="btn-secondary">Editor</button>
+          <button id="tabslobby" class="btn-secondary">Lobby</button>
+          <button id="tabshighscore" class="btn-secondary">Highscore</button>
+          <button id="tabsadmin" class="btn-secondary">Admin</button>
+        </div>
+        <div id="screen">
+          <div id="battle">
+            <div id="battledisplay"></div>
+            <div class="d-flex justify-content-between">
+              <button id="battleattack">Attack</button>
+              <button id="battleguard">Guard</button>
+            </div>
+          </div>
+          <div id="lobby">
+            <div class="d-flex justify-content-center text-light text-light">S E S S I O N  L O B B Y</div>
+            <div id="sessionlist">
+              <button id="queuesubmit">Queue for game</button>
+            </div>
+          </div>
+          <div id="store"></div>
+          <div id="editor">editor</div>
+          <div id="highscore">
+            <div class="d-flex justify-content-center text-light">H I G H S C O R E</div>
+          </div>
+          <div id="admin">
           </div>
         </div>
-        <div id="lobby">
-          <div class="d-flex justify-content-center">S E S S I O N  L O B B Y</div>
-          <div id="sessionlist">
-            <button id="queuesubmit">Queue for game 78437324793284</button>
-          </div>
-        </div>
-        <div id="store"></div>
       </div>
     </div>
 

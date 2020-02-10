@@ -102,18 +102,18 @@ namespace WebsocketApp
                             pOneMsg.Turn = playerOne.ToString();
                             pTwoMsg.Turn = playerOne.ToString();
                             pOneMsg.GOneHealth = gladiatorOne.Health.ToString();
-                            pTwoMsg.GOneHealth = gladiatorOne.Health.ToString();
+                            pTwoMsg.GOneHealth = gladiatorTwo.Health.ToString();
                             pOneMsg.GTwoHealth = gladiatorTwo.Health.ToString();
-                            pTwoMsg.GTwoHealth = gladiatorTwo.Health.ToString();
+                            pTwoMsg.GTwoHealth = gladiatorOne.Health.ToString();
                         }
                         else if ((turnCount & 1) != 0)
                         {
                             pOneMsg.Turn = playerTwo.ToString();
                             pTwoMsg.Turn = playerTwo.ToString();
                             pOneMsg.GOneHealth = gladiatorOne.Health.ToString();
-                            pTwoMsg.GOneHealth = gladiatorOne.Health.ToString();
+                            pTwoMsg.GOneHealth = gladiatorTwo.Health.ToString();
                             pOneMsg.GTwoHealth = gladiatorTwo.Health.ToString();
-                            pTwoMsg.GTwoHealth = gladiatorTwo.Health.ToString();
+                            pTwoMsg.GTwoHealth = gladiatorOne.Health.ToString();
                         }
                         if (!isFinished)
                         {
