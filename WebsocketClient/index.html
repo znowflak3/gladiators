@@ -82,7 +82,7 @@
             console.log(">>>", msg);
             socket.send(msg);
           }
-          editor.appendChild(div);
+          admin.appendChild(div);
         }
 
 
@@ -234,6 +234,7 @@
           hide(state.last);
           show(admin);
           state.last = admin;
+          free(admin);
           const type = JSON.stringify({"MailType": "adminlist"});
           const mail = JSON.stringify({"PId": state.pid});
           const msg = type + mail;
