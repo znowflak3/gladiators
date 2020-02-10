@@ -66,6 +66,21 @@
         // EDITOR has to be defined here to be the default screen
 
         const editor = document.getElementById("editor");
+        const addEditorEntry = username => {
+          const span = document.createElement("span");
+          span.textContent = username;
+          const btn = document.createElement("button");
+          btn.textContent = "DELETE";
+          btn.style.background = "#882222";
+          btn.onclick = _ => {
+            const type = JSON.stringify({"MailType": "deleteuser"});
+            const mail = JSON.stringify({"PId": state.pid, "User": username});
+            const msg = type + msg;
+            console.log(">>>", msg);
+            socket.send(msg);
+          }
+          editor.appendChild();
+        }
 
 
         let state = {
@@ -211,6 +226,18 @@
           state.last = lobby;
         }
 
+        const tabsadmin = document.getElementById("tabsadmin");
+        tabsadmin.onclick = _ => {
+          hide(state.last);
+          show(admin);
+          state.last = admin;
+          const type = JSON.stringify({"MailType": "adminlist"});
+          const mail = JSON.stringify({"PId": state.pid});
+          const msg = type + mail;
+          console.log(">>>", msg);
+          socket.send(msg);
+        }
+
         const tabsstore = document.getElementById("tabsstore");
         tabsstore.onclick = _ => {
           hide(state.last);
@@ -257,7 +284,6 @@
           "buy": 4,
         }
 
-
         socket.onmessage = msg => {
           const content = JSON.parse(msg.data);
           console.log("<<<", msg);
@@ -274,6 +300,7 @@
                 hide(lobby);
                 hide(battle);
                 hide(highscore);
+                hide(admin);
 
                 free(login);
                 login.parentNode.removeChild(login);
@@ -333,6 +360,11 @@
               state.store.forEach(e => addStoreItem(e.Name, e.Description, e.Cost));
               return;
 
+            case "adminlist":
+              free(admin);
+              content.List.forEach(item => addEditorEntry(item));
+              return;
+
             // TODO: ADD HANDLING OF MAIL TYPES
             default:
               console.log(content);
@@ -343,6 +375,7 @@
         hide(lobby);
         hide(battle);
         hide(highscore);
+        hide(admin);
 
         // TEST
       }
@@ -373,8 +406,9 @@
           <button id="tabsbattle" class="btn-secondary">Battle</button>
           <button id="tabsstore" class="btn-secondary">Store</button>
           <button id="tabseditor" class="btn-secondary">Editor</button>
-          <button id="tabslobby" class="btn-secondary">lobby</button>
+          <button id="tabslobby" class="btn-secondary">Lobby</button>
           <button id="tabshighscore" class="btn-secondary">Highscore</button>
+          <button id="tabsadmin" class="btn-secondary">Admin</button>
         </div>
         <div id="screen">
           <div id="battle">
@@ -387,13 +421,15 @@
           <div id="lobby">
             <div class="d-flex justify-content-center">S E S S I O N  L O B B Y</div>
             <div id="sessionlist">
-              <button id="queuesubmit">Queue for game 78437324793284</button>
+              <button id="queuesubmit">Queue for game</button>
             </div>
           </div>
           <div id="store"></div>
           <div id="editor">editor</div>
           <div id="highscore">
             <div class="d-flex justify-content-center">H I G H S C O R E</div>
+          </div>
+          <div id="admin">
           </div>
         </div>
       </div>
