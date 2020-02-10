@@ -159,7 +159,7 @@
             "PId": state.pid,
             "Action": "attack",
             "Target": "jesus",
-            "TurnCount": state.turncount,
+            "Turn": state.turncount,
           });
           const msg = type + mail;
           console.log(">>>", msg);
@@ -258,6 +258,7 @@
               return;
 
             case "gamestart":
+              displaySuccess("game found");
               state.battle = true;
               state.turncount = content.Turn;
               state.health = content.PlayerHealth;
@@ -303,6 +304,7 @@
     </script>
 
     <div id="app-root" class="container">
+      <div>Extra error checking can be bought as DLC. Click <a href="http://starwarsgamingnews.com/2017/11/it-will-take-4528-hours-of-gameplay-or-2100-to-unlock-all-base-game-content.html">here</a> to purchase!</div>
       <div id="logroot"></div>
       <div id="login" class="d-flex justify-content-center vertical-center">
         <div>
