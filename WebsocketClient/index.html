@@ -225,6 +225,23 @@
 
         const screen = document.getElementById("game");
 
+        const renderBattle = () => {
+          free(battledisplay);
+          let health = document.createElement("div"); div.textContent = state.health;
+          let skills = document.createElement("div"); div.textContent = state.skills;
+          let enemyname = document.createElement("div"); div.textContent = state.enemyname;
+          let enemyhealth = document.createElement("div"); div.textContent = state.enemyhealth;
+          let playername = document.createElement("div"); div.textContent = state.playername;
+          let buffs = document.createElement("div"); div.textContent = state.buffs;
+
+          battledisplay.appendChild(playername);
+          battledisplay.appendChild(health);
+          battledisplay.appendChild(skills);
+          battledisplay.appendChild(buffs);
+          battledisplay.appendChild(enemyname);
+          battledisplay.appendChild(enemyhealth);
+        }
+
         // STATE MACHINE
         const protocol = {
           "authorize": 0,
@@ -266,6 +283,23 @@
               state.enemyname = content.EnemyName;
               state.enemyhealth = content.EnemyHealth;
               state.playername = content.PlayerName;
+              state.buffs = [];
+              renderBattle();
+              return;
+
+            case "gamereturn":
+              if (content.Turn == state.pid) {
+                if (content.Winner !== undefined) {
+                  state.battle = false;
+                  free(battledisplay);
+                } else {
+                  renderBattle();
+                  state.health = content.GOneHealth;
+                  state.enemyhealth = content.GTwoHealth;
+                  state.buffs = content.Buffs;
+                  state.turncount = content.TurnCount;
+                }
+              }
               return;
 
             case "buy":
@@ -304,7 +338,10 @@
     </script>
 
     <div id="app-root" class="container">
-      <div>Extra error checking can be bought as DLC. Click <a href="http://starwarsgamingnews.com/2017/11/it-will-take-4528-hours-of-gameplay-or-2100-to-unlock-all-base-game-content.html">here</a> to purchase!</div>
+      <div>
+        Extra error checking can be bought as DLC.
+        Click <a href="http://starwarsgamingnews.com/2017/11/it-will-take-4528-hours-of-gameplay-or-2100-to-unlock-all-base-game-content.html">here</a> to purchase!
+      </div>
       <div id="logroot"></div>
       <div id="login" class="d-flex justify-content-center vertical-center">
         <div>
@@ -330,6 +367,7 @@
         </div>
         <div id="screen">
           <div id="battle">
+            <div id="battledisplay"></div>
             <div class="d-flex justify-content-between">
               <button id="battleattack">Attack</button>
               <button id="battleguard">Guard</button>
