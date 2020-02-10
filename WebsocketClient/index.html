@@ -68,7 +68,14 @@
         const editor = document.getElementById("editor");
 
 
-        let state = {items: [], inqueue: false, store: [], last: editor};
+        let state = {
+          items: [],
+          inqueue: false,
+          store: [],
+          last: editor,
+          turncount: 0,
+          battle: false,
+        };
         let socket = new WebSocket('wss://localhost:44333/ws');
         socket.onclose = _ => { displayError("lost connection"); }
         socket.onerror = e => { alert("error", e); }
@@ -144,8 +151,19 @@
 
         // BATTLE
         const battle = document.getElementById("battle");
-        const gameAction = action => {
-          ;
+        const battleguard = document.getElementById("battleguard");
+        const battleattack = document.getElementById("battleattack");
+        battleattack.onclick = _ => {
+          const type = JSON.stringify({"MailType": "gameaction"});
+          const mail = JSON.stringify({
+            "PId": state.pid,
+            "Action": "attack",
+            "Target": "jesus",
+            "TurnCount": state.turncount,
+          });
+          const msg = type + mail;
+          console.log(">>>", msg);
+          socket.send(msg);
         }
 
         // HIGHSCORE
@@ -239,6 +257,16 @@
               }
               return;
 
+            case "gamestart":
+              state.battle = true;
+              state.turncount = content.TurnCount;
+              state.health = content.PlayerHealth;
+              state.skills = content.PlayerSkills;
+              state.enemyname = content.EnemyName;
+              state.enemyhealth = content.EnemyHealth;
+              state.playername = content.PlayerName;
+              return;
+
             case "buy":
               if (content.Rejected) {
                 displaySuccess("bought: " + content.Item);
@@ -301,8 +329,8 @@
         <div id="screen">
           <div id="battle">
             <div class="d-flex justify-content-between">
-              <button>Attack</button>
-              <button>Guard</button>
+              <button id="battleattack">Attack</button>
+              <button id="battleguard">Guard</button>
             </div>
           </div>
           <div id="lobby">
