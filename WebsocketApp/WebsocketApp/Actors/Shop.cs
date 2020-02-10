@@ -19,9 +19,7 @@ namespace WebsocketApp
             ItemShop.Add(new Shop.Item("Gladius", "A mighty Sword", 100));
             ItemShop.Add(new Shop.Item("Gladius", "A mighty Sword", 100));
             ItemShop.Add(new Shop.Item("Gladius", "A mighty Sword", 100));
-            ItemShop.Add(new Shop.Item("Gladius", "A mighty Sword", 100));
-            ItemShop.Add(new Shop.Item("Gladius", "A mighty Sword", 100));
-
+            
             ActorMeth behaviour = (rt, self, _, msg) =>
             {
                 
@@ -37,6 +35,7 @@ namespace WebsocketApp
                         WebSocketClient.SendMessage(rt.GetWebSocket(new PID(long.Parse(msg.content.PId))), json);
                         break;
                     case Symbol.Buy:
+
                         break;
                 }
                 return null;
