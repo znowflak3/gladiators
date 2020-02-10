@@ -46,7 +46,7 @@ namespace WebsocketApp
                 var sessionManager_pid = rt.SpawnLink(login_pid, Actors.SessionManager());
                 var log_pid = rt.SpawnLink(login_pid, Actors.Log());
                 var echo_pid = rt.Spawn(null, Actors.Echo());
-                var shop_pid = rt.Spawn(null, Actors.Buy());
+                var shop_pid = rt.Spawn(null, Actors.Shop());
 
                 _sessionManager_pid = sessionManager_pid;
                 _echo_pid = echo_pid;
@@ -146,8 +146,8 @@ namespace WebsocketApp
 
                                         if (users.Contains(users.Find(x => x.UserName == content.Username)))
                                         {
-                                            string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(new PID(), "rejected"));
-                                            byte[] buffer = Encoding.UTF8.GetBytes(json);
+                                            string json____ = JsonSerializer.Serialize<JsonPID>(new JsonPID(new PID(), "rejected"));
+                                            byte[] buffer = Encoding.UTF8.GetBytes(json____);
                                             await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
                                         }
                                         else 
@@ -159,8 +159,8 @@ namespace WebsocketApp
 
                                             _kernel.AddWebSocketConnection(client_pid, webSocket);
                                             _websockets.Add(webSocket);
-                                            string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "clientlogin"));
-                                            byte[] buffer = Encoding.UTF8.GetBytes(json);
+                                            string json___ = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "clientlogin"));
+                                            byte[] buffer = Encoding.UTF8.GetBytes(json___);
                                             await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
                                         }
 
@@ -182,15 +182,15 @@ namespace WebsocketApp
 
                                         _kernel.AddWebSocketConnection(client_pid, webSocket);
                                         _websockets.Add(webSocket);
-                                        string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "clientlogin"));
-                                        byte[] buffer = Encoding.UTF8.GetBytes(json);
+                                        string _json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "clientlogin"));
+                                        byte[] buffer = Encoding.UTF8.GetBytes(_json);
                                         await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
 
                                     }
                                     else 
                                     {
-                                        string json = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "rejected"));
-                                        byte[] buffer = Encoding.UTF8.GetBytes(json);
+                                        string json__ = JsonSerializer.Serialize<JsonPID>(new JsonPID(client_pid, "rejected"));
+                                        byte[] buffer = Encoding.UTF8.GetBytes(json__);
                                         await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
                                     }
                                     break;
@@ -210,7 +210,25 @@ namespace WebsocketApp
                                 case "buy":
                                     ///send to shop manager :)
                                     _kernel.Send(_shop_pid, new Mail(Symbol.Buy, content));
-                                    break;                        
+                                    break;
+                                case "adminlist":
+                                    var db = new Usermanager(new EditorContext());
+                                    var list = db.ReadAllUser();
+                                    var listClass = new AdminList()
+                                    {
+                                        MailType = "adminlist",
+                                        Users = new List<string>()
+                                    };
+                                    foreach (GladiatorDatabase.User s in list)
+                                    {
+                                        listClass.Users.Add(s.UserName);
+                                    }
+                                    string json = JsonSerializer.Serialize(listClass);
+                                    WebSocketClient.SendMessage(webSocket, json);
+
+                                    break;
+                                case "deleteuser":
+                                    break;
                                 default:
                                     break;
                             }

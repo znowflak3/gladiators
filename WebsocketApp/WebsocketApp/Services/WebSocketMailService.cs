@@ -22,6 +22,39 @@ namespace WebsocketApp.Services
             dynamic result = null;
             switch (_type)
             {
+                case "adminlist":
+                    try
+                    {
+                        JsonPID pid = JsonSerializer.Deserialize<JsonPID>(_content);
+                        result = pid;
+                    }
+                    catch (JsonException ex)
+                    {
+                        result = ex.Message;
+                    }
+                    break;
+                case "deleteuser":
+                    try
+                    {
+                        DeleteUser pid = JsonSerializer.Deserialize<DeleteUser>(_content);
+                        result = pid;
+                    }
+                    catch (JsonException ex)
+                    {
+                        result = ex.Message;
+                    }
+                    break;
+                case "items":
+                    try
+                    {
+                        JsonPID pid = JsonSerializer.Deserialize<JsonPID>(_content);
+                        result = pid;
+                    }
+                    catch (JsonException ex)
+                    {
+                        result = ex.Message;
+                    }
+                    break;
                 case "buy":
                     try
                     {

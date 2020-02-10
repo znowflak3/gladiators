@@ -151,7 +151,8 @@ namespace GamesVonKoch.Core
         QueueGame,
         GameAction,
         Echo,
-        Items, Buy
+        Items, Buy,
+        DeleteUser, AdminList
 
 
     }
