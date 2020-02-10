@@ -72,6 +72,9 @@
           const btn = document.createElement("button");
           btn.textContent = "DELETE";
           btn.style.background = "#882222";
+          const div = document.createElement("div");
+          div.appendChild(span);
+          div.appendChild(btn);
           btn.onclick = _ => {
             const type = JSON.stringify({"MailType": "deleteuser"});
             const mail = JSON.stringify({"PId": state.pid, "User": username});
@@ -79,7 +82,7 @@
             console.log(">>>", msg);
             socket.send(msg);
           }
-          editor.appendChild();
+          editor.appendChild(div);
         }
 
 
