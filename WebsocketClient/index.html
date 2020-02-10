@@ -14,6 +14,11 @@
   align-items: center;
 }
 
+body {
+  background: url("res/gladiators.png");
+background-size: 100%;
+}
+
 </style>
   </head>
   <body>
@@ -395,15 +400,15 @@
       <div id="logroot"></div>
       <div id="login" class="d-flex justify-content-center vertical-center">
         <div>
-          <div class="d-flex justify-content-center">G L A D I A T O R S</div>
+          <div class="d-flex justify-content-center text-light">G L A D I A T O R S</div>
           <br>
-          <div>Name: <input id="loginname" type="text"></div>
-          <div>Pass: <input id="loginpass" type="text"></div>
-          <div>Mail: <input id="loginemail" type="text"></div>
+          <div class="text-light">Name: <input id="loginname" type="text"></div>
+          <div class="text-light">Pass: <input id="loginpass" type="text"></div>
+          <div class="text-light">Mail: <input id="loginemail" type="text"></div>
           <br>
           <div class="d-flex justify-content-between">
             <button id="loginsubmit" class="btn-primary">Submit</button>
-            <div>Register: <input id="loginreg" type="checkbox"></div>
+            <div class="text-light">Register: <input id="loginreg" type="checkbox"></div>
           </div>
         </div>
       </div>
@@ -425,7 +430,7 @@
             </div>
           </div>
           <div id="lobby">
-            <div class="d-flex justify-content-center">S E S S I O N  L O B B Y</div>
+            <div class="d-flex justify-content-center text-light text-light">S E S S I O N  L O B B Y</div>
             <div id="sessionlist">
               <button id="queuesubmit">Queue for game</button>
             </div>
@@ -433,7 +438,7 @@
           <div id="store"></div>
           <div id="editor">editor</div>
           <div id="highscore">
-            <div class="d-flex justify-content-center">H I G H S C O R E</div>
+            <div class="d-flex justify-content-center text-light">H I G H S C O R E</div>
           </div>
           <div id="admin">
           </div>
