@@ -227,12 +227,12 @@
 
         const renderBattle = () => {
           free(battledisplay);
-          let health = document.createElement("div"); div.textContent = state.health;
-          let skills = document.createElement("div"); div.textContent = state.skills;
-          let enemyname = document.createElement("div"); div.textContent = state.enemyname;
-          let enemyhealth = document.createElement("div"); div.textContent = state.enemyhealth;
-          let playername = document.createElement("div"); div.textContent = state.playername;
-          let buffs = document.createElement("div"); div.textContent = state.buffs;
+          let health = document.createElement("div"); health.textContent = state.health;
+          let skills = document.createElement("div"); skills.textContent = state.skills;
+          let enemyname = document.createElement("div"); enemyname.textContent = state.enemyname;
+          let enemyhealth = document.createElement("div"); enemyhealth.textContent = state.enemyhealth;
+          let playername = document.createElement("div"); playername.textContent = state.playername;
+          let buffs = document.createElement("div"); buffs.textContent = state.buffs;
 
           battledisplay.appendChild(playername);
           battledisplay.appendChild(health);
