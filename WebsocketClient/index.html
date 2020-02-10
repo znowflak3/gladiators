@@ -81,6 +81,8 @@
             const msg = type + msg;
             console.log(">>>", msg);
             socket.send(msg);
+            free(div);
+            div.parentNode.removeChild(div);
           }
           admin.appendChild(div);
         }
