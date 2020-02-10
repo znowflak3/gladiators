@@ -25,11 +25,48 @@ namespace GladiatorDatabase
                         var crud = Console.ReadKey();
 
                         Usermanager usermanager = new Usermanager(db);
+                        Lanistamanager lanistamanager = new Lanistamanager(db);
+                        Gladiatormanager gladiatormanager = new Gladiatormanager(db);
+                        
+                        //string username1 = "Timon",Pasword = "hakuna",email = "matata@bajs";
+                        //List<User> test;
+                        
+                        //usermanager.Create(username1,Pasword,email);
+                        
+                        //test = usermanager.ReadAllUser();
+                        
+                        /*foreach (var item in test)
+                        {
+                            Console.WriteLine("user:{0} Pas:{1} em:{2} id:{3}", item.UserName,item.Password,
+                                item.Email,item.UserId);
+                        }*/
+                        
+                        //User test2 = test.OrderBy(s => s.UserName).First<User>();
+                        //Console.WriteLine("user:{0}", test2.UserName);
+                        
+                        //lanistamanager.Create("Mouse", test2.UserId);
+                        //var test3 = lanistamanager.ReadAll(test2.UserId);
+                        /*foreach (var item in test3)
+                        {
+                            Console.WriteLine("Lani:{0} User:{1} mony:{2} id:{3}", item.LanistaName,item.User.UserName,
+                                item.Money,item.LanistaId);
+                        }*/
+                        //var test4 = test3.OrderBy(s => s.LanistaName).First<Lanista>();
+                        //lanistamanager.Update(test4, "Jesus", 0);
 
-                        //usermanager.Create();
-                        //usermanager.Read();
-                        //usermanager.Update();
+                        //gladiatormanager.LanistaCreate(test4);
+                        //var test5 = gladiatormanager.LanistaReadAll(test4);
+                        /*foreach (var item in test5)
+                        {
+                            Console.WriteLine("Lani:{0} User:{1} GladID:{2} Morale:{3}", item.Lanista.LanistaName,
+                                item.Lanista.User.UserName,
+                                item.GladiatorId, item.Morale);
+                        }*/
+                        //gladiatormanager.Update()
+                        //usermanager.Update(test2, username1, Pasword,email,false);
                         //usermanager.Destroy();
+
+
                         break;
                     case ConsoleKey.D2:
                         Console.WriteLine("Lanistas: ");
@@ -201,14 +238,14 @@ namespace GladiatorDatabase
         EditorContext DB { get; set; }
 
 
-        public void ShopCreate(Shop shop)
+        /*public void ShopCreate(Shop shop)
         {
             Console.WriteLine("\n*ShopCreate Gladiator*");
             var owner = shop.ShopId;
             var Gladiator = new Gladiator { ShopId = owner, Alive = true, Health = 20, Stamina = 25, Strength = 15, Defense = 0, Speed = 0, Morale = 50, Kills = 0, Loss = 0, Wins = 0 };
             DB.Gladiators.Add(Gladiator);
             DB.SaveChanges();
-        }
+        }*/
         public void LanistaCreate(Lanista lanista)
         {
             Console.WriteLine("\n*LanistaCreate Gladiator*");
@@ -221,16 +258,17 @@ namespace GladiatorDatabase
             DB.Gladiators.Add(Gladiator);
             DB.SaveChanges();
         }
-        public List<Gladiator> ShopReadAll(Shop shop)
+        /*public List<Gladiator> ShopReadAll(Shop shop)
         {
             Console.WriteLine("\n*Read ShopGladiator*");
             var SortGladiatorShop = DB.Gladiators.Where(s => s.ShopId == shop.ShopId).OrderBy(s => s.GladiatorId).ToList<Gladiator>();
             return SortGladiatorShop;
-        }
+        }*/
         public List<Gladiator> LanistaReadAll(Lanista lanista) 
         {
             Console.WriteLine("\n*Read LanistaGladiator*");
-            var SortGladiatorLanista = DB.Gladiators.Where(s => s.LanistaId == lanista.LanistaId).OrderBy(s => s.GladiatorId).ToList<Gladiator>();
+            var SortGladiatorLanista = DB.Gladiators.Where(s => s.LanistaId == lanista.LanistaId)
+                .OrderBy(s => s.GladiatorId).ToList<Gladiator>();
             return SortGladiatorLanista;
         }
         public Gladiator Read(Lanista lanista)
@@ -324,12 +362,15 @@ namespace GladiatorDatabase
         public int Kills { get; set; }
         public bool Alive { get; set; }
 
-        public virtual int ShopId { get; set; }
+        /*public int ShopId { get; set; }*/
         public virtual Shop Shop { get; set; }
+        
         public int LanistaId { get; set; }
         public virtual Lanista Lanista { get; set; }
-        public int BattleResultId { get; set; }
-        public virtual BattleResult LastBattle { get; set; }
+        
+        /*todo fix key
+         * public int BattleResultId { get; set; }
+        public virtual BattleResult LastBattle { get; set; }*/
         public virtual List<Item> Equipment { get; set; }
 
 
@@ -353,7 +394,7 @@ namespace GladiatorDatabase
 
     }
 
-
+    /*
     public class GladiatorKills
     {
         public int GladiatorKillsId { get; set; }
@@ -372,7 +413,7 @@ namespace GladiatorDatabase
         public virtual List<Gladiator> Gladiators { get; set; }
         public virtual List<GladiatorKills> Killed { get; set; }
 
-    }
+    }*/
 
     public class Shop
     {
@@ -393,8 +434,9 @@ namespace GladiatorDatabase
         public DbSet<Lanista> Lanistas { get; set; }
         public DbSet<Gladiator> Gladiators { get; set; }
         public DbSet<Item> Items { get; set; }
-        public DbSet<BattleResult> BattleResults { get; set; }
-        public DbSet<GladiatorKills> GladiatorKills { get; set; }
+        /*todo fix key
+         * public DbSet<BattleResult> BattleResults { get; set; }
+        public DbSet<GladiatorKills> GladiatorKills { get; set; }*/
         public DbSet<Shop> Shop { get; set; }
     }
 }
